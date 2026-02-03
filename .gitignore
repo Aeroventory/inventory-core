@@ -1,0 +1,31 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.npm
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+CLAUDE.md
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
