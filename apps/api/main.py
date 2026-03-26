@@ -1,19 +1,18 @@
-import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, text
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL"
-)
+from core.config import settings
+from db.session import engine
+from routers.products import router as products_router
+from routers.files import router as files_router
+from routers.snapshots import router as snapshots_router
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is required")
-
-engine = create_engine(DATABASE_URL)
 
 def check_db_connection() -> bool:
     """Check if database is reachable."""
@@ -31,18 +30,26 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Inventory Core API",
-    version="0.1.0",
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[o.strip() for o in settings.CORS_ORIGINS.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(products_router)
+app.include_router(files_router)
+app.include_router(snapshots_router)
+
+uploads_dir = Path(__file__).resolve().parent / "storage" / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
@@ -58,4 +65,4 @@ def health_check():
 @app.get("/")
 def root():
     """Root endpoint."""
-    return {"message": "Inventory Core API", "version": "0.1.0"}
+    return {"message": settings.PROJECT_NAME, "version": settings.VERSION}

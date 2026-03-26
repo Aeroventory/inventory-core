@@ -35,38 +35,59 @@ cd inventory-core
 cp .env.example .env
 ```
 
-Edit `.env` if you need to customize database credentials.
+Edit `.env` to configure ports, credentials, and URLs.
 
 ### 3. Start all services
 
+Run from the **project root**:
+
 ```bash
-cd infra
-docker compose up --build
+docker compose -f infra/docker-compose.yml up --build
 ```
 
 This will start:
-- **PostgreSQL** database on port 5432
-- **FastAPI** backend on http://localhost:8000
-- **React** frontend on http://localhost:3000
+
+- **PostgreSQL** database on port `DB_PORT` (default: 5432)
+- **FastAPI** backend on `API_PORT` (default: 8003)
+- **React** frontend on `WEB_PORT` (default: 3000)
+
+Database migrations run automatically on startup.
 
 ### 4. Verify services are running
 
-- API Health: http://localhost:8000/health
-- API Docs: http://localhost:8000/docs
+- API Health: http://localhost:8003/health
+- API Docs: http://localhost:8003/docs
 - Web App: http://localhost:3000
+
+> Ports may differ based on your `.env` configuration.
 
 ## Stopping Services
 
 ```bash
-cd infra
-docker compose down
+docker compose -f infra/docker-compose.yml down
 ```
 
 To remove volumes (database data):
 
 ```bash
-docker compose down -v
+docker compose -f infra/docker-compose.yml down -v
 ```
+
+## Configuration
+
+All configuration is managed through the root `.env` file:
+
+| Variable            | Default                 | Description               |
+| ------------------- | ----------------------- | ------------------------- |
+| `POSTGRES_USER`     | `postgres`              | Database username         |
+| `POSTGRES_PASSWORD` | `postgres`              | Database password         |
+| `POSTGRES_DB`       | `inventory`             | Database name             |
+| `SECRET_KEY`        | —                       | API secret key (required) |
+| `API_PORT`          | `8003`                  | API host port             |
+| `WEB_PORT`          | `3000`                  | Web app host port         |
+| `DB_PORT`           | `5432`                  | Database host port        |
+| `CORS_ORIGINS`      | `http://localhost:3000` | Allowed CORS origins      |
+| `VITE_API_URL`      | `http://localhost:8003` | API URL for the frontend  |
 
 ## Development
 
@@ -77,11 +98,3 @@ The API code is mounted as a volume, so changes will auto-reload.
 ### Web (React)
 
 The web code is mounted as a volume with hot module replacement enabled.
-
-## Services
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| API | http://localhost:8000 | FastAPI backend |
-| Web | http://localhost:3000 | React frontend |
-| DB | localhost:5432 | PostgreSQL database |
