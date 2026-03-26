@@ -1,13 +1,17 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from core.config import settings
 from db.session import engine
 from routers.products import router as products_router
+from routers.files import router as files_router
+from routers.snapshots import router as snapshots_router
 
 
 def check_db_connection() -> bool:
@@ -40,6 +44,12 @@ app.add_middleware(
 )
 
 app.include_router(products_router)
+app.include_router(files_router)
+app.include_router(snapshots_router)
+
+uploads_dir = Path(__file__).resolve().parent / "storage" / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)

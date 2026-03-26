@@ -9,7 +9,9 @@ from core.config import settings
 from db.session import Base
 
 # Import all models so Base.metadata knows about them
-import models.product  # noqa: F401
+import models.product
+import models.inventory_snapshot
+import models.inventory_snapshot_item
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

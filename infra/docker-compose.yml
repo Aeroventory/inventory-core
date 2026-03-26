@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
       test:
         [
@@ -30,11 +30,13 @@ services:
     env_file:
       - ../.env
     environment:
-      POSTGRES_HOST: db # Override for Docker networking
+      POSTGRES_HOST: db
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     ports:
-      - "8001:8000"
+      - "${API_PORT:-8003}:8000"
     volumes:
       - ../apps/api:/app
+      - api_storage:/app/storage
     depends_on:
       db:
         condition: service_healthy
@@ -50,8 +52,10 @@ services:
       context: ../apps/web
       dockerfile: Dockerfile
     container_name: inventory-web
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8003}
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     volumes:
       - ../apps/web:/app
       - /app/node_modules
@@ -60,3 +64,4 @@ services:
 
 volumes:
   postgres_data:
+  api_storage:
