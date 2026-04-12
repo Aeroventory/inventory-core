@@ -8,8 +8,8 @@ async def call_vision_infer(file_path: str) -> list[dict]:
     """
     Call the vision service /infer endpoint with an image file.
 
-    Returns a list of detected items, e.g.:
-        [{"product_name": "Widget A", "quantity": 5}, ...]
+    Returns the list of detections, e.g.:
+        [{"sku": "ABC-123", "count": 10, "confidence": 0.95, "meta": {}}, ...]
     """
     url = f"{settings.VISION_SERVICE_URL}/infer"
 
@@ -34,4 +34,5 @@ async def call_vision_infer(file_path: str) -> list[dict]:
             detail=f"Vision service returned status {response.status_code}",
         )
 
-    return response.json()
+    data = response.json()
+    return data.get("detections", [])
