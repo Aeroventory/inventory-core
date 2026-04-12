@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 
@@ -33,6 +35,54 @@ def create_snapshot(db: Session, snapshot_in: SnapshotCreate) -> InventorySnapsh
     db.commit()
     db.refresh(snapshot)
     return snapshot
+
+
+def get_latest_snapshot(db: Session) -> InventorySnapshot | None:
+    return (
+        db.query(InventorySnapshot)
+        .options(joinedload(InventorySnapshot.items).joinedload(InventorySnapshotItem.product))
+        .order_by(InventorySnapshot.created_at.desc())
+        .first()
+    )
+
+
+def ingest_snapshot(
+    db: Session,
+    file_path: str,
+    snapshot_date: date | None,
+    vision_results: list[dict],
+) -> InventorySnapshot:
+    """Create a snapshot from vision service inference results."""
+    name = f"Snapshot {snapshot_date or datetime.now().strftime('%Y-%m-%d')}"
+    snapshot = InventorySnapshot(
+        name=name,
+        file_path=file_path,
+        created_at=datetime.combine(snapshot_date, datetime.min.time()) if snapshot_date else datetime.now(),
+    )
+    db.add(snapshot)
+    db.flush()
+
+    for item in vision_results:
+        product_name = item.get("product_name")
+        quantity = item.get("quantity", 0)
+
+        product = db.query(Product).filter(Product.name == product_name).first()
+        if not product:
+            product = Product(name=product_name, value=0)
+            db.add(product)
+            db.flush()
+
+        snapshot_item = InventorySnapshotItem(
+            product_id=product.id,
+            snapshot_id=snapshot.id,
+            quantity=quantity,
+        )
+        db.add(snapshot_item)
+
+    db.commit()
+    db.refresh(snapshot)
+
+    return get_snapshot_by_id(db, snapshot.id)
 
 
 def delete_snapshot(db: Session, snapshot_id: int) -> bool:

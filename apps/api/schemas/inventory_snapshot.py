@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -34,6 +36,11 @@ class SnapshotItemCreate(BaseModel):
     product_id: int
     snapshot_id: int
     quantity: int
+
+
+class SnapshotIngest(BaseModel):
+    """Schema for the snapshot_date form field in the ingest endpoint."""
+    snapshot_date: Optional[date] = None
 
 
 class SnapshotItemUpdate(BaseModel):

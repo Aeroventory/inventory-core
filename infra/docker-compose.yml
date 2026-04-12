@@ -32,6 +32,7 @@ services:
     environment:
       POSTGRES_HOST: db
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      VISION_SERVICE_URL: ${VISION_SERVICE_URL:-http://vision:8001}
     ports:
       - "${API_PORT:-8003}:8000"
     volumes:
