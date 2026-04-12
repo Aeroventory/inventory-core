@@ -62,20 +62,20 @@ def ingest_snapshot(
     db.add(snapshot)
     db.flush()
 
-    for item in vision_results:
-        product_name = item.get("product_name")
-        quantity = item.get("quantity", 0)
+    for detection in vision_results:
+        sku = detection.get("sku")
+        count = detection.get("count", 0)
 
-        product = db.query(Product).filter(Product.name == product_name).first()
+        product = db.query(Product).filter(Product.name == sku).first()
         if not product:
-            product = Product(name=product_name, value=0)
+            product = Product(name=sku, value=0)
             db.add(product)
             db.flush()
 
         snapshot_item = InventorySnapshotItem(
             product_id=product.id,
             snapshot_id=snapshot.id,
-            quantity=quantity,
+            quantity=count,
         )
         db.add(snapshot_item)
 

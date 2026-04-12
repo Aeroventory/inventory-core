@@ -48,6 +48,22 @@ services:
       retries: 5
       start_period: 10s
 
+  vision:
+    build:
+      context: ../services/vision
+      dockerfile: Dockerfile
+    container_name: inventory-vision
+    ports:
+      - "${VISION_PORT:-8001}:8001"
+    volumes:
+      - ../services/vision:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   web:
     build:
       context: ../apps/web

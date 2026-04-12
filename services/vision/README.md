@@ -1,12 +1,32 @@
-# Vision Service
+# Vision Inference Service
 
-This directory will contain vision libraries and pipelines for image processing and analysis.
+Stub FastAPI service that provides inventory detection from images.
 
-## Structure (planned)
+## Endpoints
 
+- `POST /infer` — Accept an image file or image URL, return detection results
+- `GET /health` — Health check
+
+## Response contract
+
+```json
+{
+  "detections": [
+    {
+      "sku": "ABC-123",
+      "count": 10,
+      "confidence": 0.95,
+      "meta": {}
+    }
+  ],
+  "model_version": "stub-0.1"
+}
 ```
-/services/vision
-  /pipelines     # Image processing pipelines
-  /models        # ML models and configs
-  /utils         # Utility functions
+
+## Running
+
+```bash
+docker compose -f infra/docker-compose.yml up vision
 ```
+
+The service runs on port 8001 by default.

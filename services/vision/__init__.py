@@ -1,2 +1,1 @@
-# Vision service placeholder
-# This module will contain vision libraries and pipelines
+# Vision inference service — stub implementation (v0.1)
