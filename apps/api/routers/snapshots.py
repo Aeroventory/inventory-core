@@ -1,19 +1,59 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import date
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from db.session import get_db
-from schemas.inventory_snapshot import SnapshotCreate, SnapshotResponse, SnapshotItemCreate, SnapshotItemUpdate, SnapshotItemResponse
+from schemas.inventory_snapshot import (
+    SnapshotCreate,
+    SnapshotResponse,
+    SnapshotItemCreate,
+    SnapshotItemUpdate,
+    SnapshotItemResponse,
+)
+from services.file_service import upload_file, save_file
 from services.snapshot_services import (
     get_all_snapshots,
     get_snapshot_by_id,
+    get_latest_snapshot,
     create_snapshot,
+    ingest_snapshot,
     delete_snapshot,
     add_snapshot_item,
     update_snapshot_item,
     delete_snapshot_item,
 )
+from services.vision_client import call_vision_infer
+from services.file_service import UPLOADS_DIR
 
 router = APIRouter(prefix="/snapshots", tags=["Snapshots"])
+
+
+@router.post("/ingest", response_model=SnapshotResponse, status_code=status.HTTP_201_CREATED)
+async def ingest(
+    file: UploadFile = File(...),
+    snapshot_date: Optional[date] = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Accept an image upload, call the vision service to infer inventory, and persist the snapshot."""
+    temp_name = upload_file(file)
+    saved_path = save_file(temp_name, folder="snapshots")
+
+    abs_path = str(UPLOADS_DIR / saved_path)
+    vision_results = await call_vision_infer(abs_path)
+
+    snapshot = ingest_snapshot(db, saved_path, snapshot_date, vision_results)
+    return snapshot
+
+
+@router.get("/latest", response_model=SnapshotResponse)
+def latest_snapshot(db: Session = Depends(get_db)):
+    """Return the most recent snapshot with its items."""
+    snapshot = get_latest_snapshot(db)
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="No snapshots found")
+    return snapshot
 
 
 @router.get("/", response_model=list[SnapshotResponse])

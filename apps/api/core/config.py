@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # CORS — comma-separated origins
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    # Vision service
+    VISION_SERVICE_URL: str = "http://vision:8001"
+
     @property
     def database_url(self) -> str:
         return (
