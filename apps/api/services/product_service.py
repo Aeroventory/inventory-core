@@ -8,7 +8,7 @@ def get_all_products(db: Session) -> list[Product]:
 
 
 def create_product(db: Session, product_in: ProductCreate) -> Product:
-    product = Product(name=product_in.name, value=product_in.value)
+    product = Product(**product_in.model_dump())
     db.add(product)
     db.commit()
     db.refresh(product)

@@ -65,10 +65,11 @@ def ingest_snapshot(
     for detection in vision_results:
         sku = detection.get("sku")
         count = detection.get("count", 0)
+        confidence_score = detection.get("confidence")
 
-        product = db.query(Product).filter(Product.name == sku).first()
+        product = db.query(Product).filter(Product.sku == sku).first()
         if not product:
-            product = Product(name=sku, value=0)
+            product = Product(name=sku, sku=sku, value=0)
             db.add(product)
             db.flush()
 
@@ -76,6 +77,7 @@ def ingest_snapshot(
             product_id=product.id,
             snapshot_id=snapshot.id,
             quantity=count,
+            confidence_score=confidence_score,
         )
         db.add(snapshot_item)
 
@@ -114,6 +116,8 @@ def add_snapshot_item(db: Session, item_in: SnapshotItemCreate) -> InventorySnap
 
     if existing:
         existing.quantity += item_in.quantity
+        if item_in.confidence_score is not None:
+            existing.confidence_score = item_in.confidence_score
         db.commit()
         db.refresh(existing)
         return existing
@@ -122,6 +126,7 @@ def add_snapshot_item(db: Session, item_in: SnapshotItemCreate) -> InventorySnap
         product_id=item_in.product_id,
         snapshot_id=item_in.snapshot_id,
         quantity=item_in.quantity,
+        confidence_score=item_in.confidence_score,
     )
     db.add(item)
     db.commit()

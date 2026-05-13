@@ -4,6 +4,7 @@ export interface SnapshotItem {
   id: number;
   product_id: number;
   quantity: number;
+  confidence_score?: number | null;
   product: Product;
 }
 
