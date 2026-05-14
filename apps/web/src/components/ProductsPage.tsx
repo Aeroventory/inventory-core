@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { ProductDTO, ProductUpdateDTO } from "@/dtos/ProductDTO";
 import { Product } from "@/models/Product";
 import { createProduct, deleteProduct, getProducts, updateProduct } from "@/services/product-endpoints";
+import { useAuthStore } from "@/stores/auth-store";
 
 const emptyDraft: ProductDTO = {
   name: "",
@@ -55,6 +56,7 @@ function cleanDraft(draft: ProductDTO | ProductUpdateDTO) {
 }
 
 export default function ProductsPage() {
+  const isAdmin = useAuthStore((state) => state.isAdmin());
   const [products, setProducts] = useState<Product[]>([]);
   const [draft, setDraft] = useState<ProductDTO>(emptyDraft);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -167,6 +169,10 @@ export default function ProductsPage() {
       .catch(() => setError("Failed to delete product."));
   };
 
+  const tableHeadings = isAdmin
+    ? ["Product", "SKU", "Value", "Location", "Schema Fields", "Actions"]
+    : ["Product", "SKU", "Value", "Location", "Schema Fields"];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -189,33 +195,35 @@ export default function ProductsPage() {
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Create product</CardTitle>
-          <CardDescription>
-            Create inventory rows with the backend product schema, including required SKU and optional location fields.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
-            <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Product name" />
-            <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder="SKU" />
-            <Input
-              type="number"
-              value={draft.value || ""}
-              onChange={(event) => setDraft({ ...draft, value: Number(event.target.value) })}
-              placeholder="Value"
-            />
-            <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder="Site" />
-            <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder="Aisle" />
-            <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder="Rack" />
-            <Button onClick={handleCreate} disabled={saving}>
-              <Plus size={16} />
-              Add
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Create product</CardTitle>
+            <CardDescription>
+              Create inventory rows with the backend product schema, including required SKU and optional location fields.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
+              <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Product name" />
+              <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder="SKU" />
+              <Input
+                type="number"
+                value={draft.value || ""}
+                onChange={(event) => setDraft({ ...draft, value: Number(event.target.value) })}
+                placeholder="Value"
+              />
+              <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder="Site" />
+              <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder="Aisle" />
+              <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder="Rack" />
+              <Button onClick={handleCreate} disabled={saving}>
+                <Plus size={16} />
+                Add
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -237,7 +245,7 @@ export default function ProductsPage() {
               <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr className="bg-[#F7FAF8] text-xs font-medium uppercase text-[#5B6B63]">
-                    {["Product", "SKU", "Value", "Location", "Schema Fields", "Actions"].map((heading) => (
+                    {tableHeadings.map((heading) => (
                       <th key={heading} className="border-b border-[#D9E4DD] px-4 py-3">
                         {heading}
                       </th>
@@ -246,7 +254,7 @@ export default function ProductsPage() {
                 </thead>
                 <tbody className="bg-white">
                   {filteredProducts.map((product) => {
-                    const isEditing = editingId === product.id;
+                    const isEditing = isAdmin && editingId === product.id;
                     const location = productLocation(product);
                     return (
                       <tr key={product.id} className="hover:bg-[#F7FAF8]">
@@ -298,29 +306,31 @@ export default function ProductsPage() {
                             <Badge tone={product.sku ? "green" : "warning"}>SKU {product.sku ? "ready" : "missing"}</Badge>
                           </div>
                         </td>
-                        <td className="border-b border-[#D9E4DD] px-4 py-3">
-                          {isEditing ? (
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => handleUpdate(product.id)} disabled={saving}>
-                                <Save size={14} />
-                                Save
-                              </Button>
-                              <Button size="sm" variant="secondary" onClick={cancelEditing}>
-                                <X size={14} />
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button size="icon" variant="secondary" aria-label="Edit product" onClick={() => startEditing(product)}>
-                                <Edit3 size={15} />
-                              </Button>
-                              <Button size="icon" variant="danger" aria-label="Delete product" onClick={() => handleDelete(product.id)}>
-                                <Trash2 size={15} />
-                              </Button>
-                            </div>
-                          )}
-                        </td>
+                        {isAdmin && (
+                          <td className="border-b border-[#D9E4DD] px-4 py-3">
+                            {isEditing ? (
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => handleUpdate(product.id)} disabled={saving}>
+                                  <Save size={14} />
+                                  Save
+                                </Button>
+                                <Button size="sm" variant="secondary" onClick={cancelEditing}>
+                                  <X size={14} />
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Button size="icon" variant="secondary" aria-label="Edit product" onClick={() => startEditing(product)}>
+                                  <Edit3 size={15} />
+                                </Button>
+                                <Button size="icon" variant="danger" aria-label="Delete product" onClick={() => handleDelete(product.id)}>
+                                  <Trash2 size={15} />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

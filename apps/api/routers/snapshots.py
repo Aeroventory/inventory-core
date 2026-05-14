@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from core.security import get_current_user, require_admin
 from db.session import get_db
 from schemas.inventory_snapshot import (
     SnapshotCreate,
@@ -35,6 +36,7 @@ async def ingest(
     file: UploadFile = File(...),
     snapshot_date: Optional[date] = Form(None),
     db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
 ):
     """Accept an image upload, call the vision service to infer inventory, and persist the snapshot."""
     temp_name = upload_file(file)
@@ -48,7 +50,9 @@ async def ingest(
 
 
 @router.get("/latest", response_model=SnapshotResponse)
-def latest_snapshot(db: Session = Depends(get_db)):
+def latest_snapshot(
+    db: Session = Depends(get_db), _current_user=Depends(get_current_user)
+):
     """Return the most recent snapshot with its items."""
     snapshot = get_latest_snapshot(db)
     if not snapshot:
@@ -57,12 +61,18 @@ def latest_snapshot(db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[SnapshotResponse])
-def list_snapshots(db: Session = Depends(get_db)):
+def list_snapshots(
+    db: Session = Depends(get_db), _current_user=Depends(get_current_user)
+):
     return get_all_snapshots(db)
 
 
 @router.get("/{snapshot_id}", response_model=SnapshotResponse)
-def get_snapshot(snapshot_id: int, db: Session = Depends(get_db)):
+def get_snapshot(
+    snapshot_id: int,
+    db: Session = Depends(get_db),
+    _current_user=Depends(get_current_user),
+):
     snapshot = get_snapshot_by_id(db, snapshot_id)
     if not snapshot:
         raise HTTPException(status_code=404, detail="Snapshot not found")
@@ -70,24 +80,41 @@ def get_snapshot(snapshot_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=SnapshotResponse, status_code=status.HTTP_201_CREATED)
-def add_snapshot(snapshot_in: SnapshotCreate, db: Session = Depends(get_db)):
+def add_snapshot(
+    snapshot_in: SnapshotCreate,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
     return create_snapshot(db, snapshot_in)
 
 
 @router.delete("/{snapshot_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_snapshot(snapshot_id: int, db: Session = Depends(get_db)):
+def remove_snapshot(
+    snapshot_id: int,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
     deleted = delete_snapshot(db, snapshot_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Snapshot not found")
 
 
 @router.post("/items", response_model=SnapshotItemResponse, status_code=status.HTTP_201_CREATED)
-def add_item(item_in: SnapshotItemCreate, db: Session = Depends(get_db)):
+def add_item(
+    item_in: SnapshotItemCreate,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
     return add_snapshot_item(db, item_in)
 
 
 @router.patch("/items/{item_id}", response_model=SnapshotItemResponse)
-def edit_item(item_id: int, item_in: SnapshotItemUpdate, db: Session = Depends(get_db)):
+def edit_item(
+    item_id: int,
+    item_in: SnapshotItemUpdate,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
     item = update_snapshot_item(db, item_id, item_in)
     if not item:
         raise HTTPException(status_code=404, detail="Snapshot item not found")
@@ -95,7 +122,11 @@ def edit_item(item_id: int, item_in: SnapshotItemUpdate, db: Session = Depends(g
 
 
 @router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_item(item_id: int, db: Session = Depends(get_db)):
+def remove_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
     deleted = delete_snapshot_item(db, item_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Snapshot item not found")

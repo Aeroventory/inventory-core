@@ -3,9 +3,11 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import SnapshotForm from "@/components/SnapshotForm";
 import SnapshotList from "@/components/SnapshotList";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function SnapshotsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const isAdmin = useAuthStore((state) => state.isAdmin());
 
   return (
     <div className="space-y-6">
@@ -17,7 +19,7 @@ export default function SnapshotsPage() {
         </p>
       </div>
 
-      <SnapshotForm onSaved={() => setRefreshKey((value) => value + 1)} />
+      {isAdmin && <SnapshotForm onSaved={() => setRefreshKey((value) => value + 1)} />}
       <SnapshotList refreshKey={refreshKey} />
     </div>
   );
