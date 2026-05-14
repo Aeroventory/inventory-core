@@ -10,6 +10,11 @@ class ProductInSnapshot(BaseModel):
     id: int
     name: str
     value: int
+    sku: str
+    qr_code_pattern: Optional[str] = None
+    location_site: Optional[str] = None
+    location_aisle: Optional[str] = None
+    location_rack: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -19,6 +24,7 @@ class SnapshotItemResponse(BaseModel):
     id: int
     product_id: int
     quantity: int
+    confidence_score: Optional[float] = None
     product: ProductInSnapshot
 
     class Config:
@@ -36,6 +42,7 @@ class SnapshotItemCreate(BaseModel):
     product_id: int
     snapshot_id: int
     quantity: int
+    confidence_score: Optional[float] = None
 
 
 class SnapshotIngest(BaseModel):

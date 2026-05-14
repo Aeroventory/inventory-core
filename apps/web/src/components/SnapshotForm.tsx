@@ -1,8 +1,15 @@
-import { useState, useEffect } from "react";
-import { Product } from "../models/Product";
-import { getProducts } from "../services/product-endpoints";
-import { uploadFile, saveFile } from "../services/file-endpoints";
-import { createSnapshot, addSnapshotItem } from "../services/snapshot-endpoints";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, ImagePlus, PackagePlus, Save, Trash2, UploadCloud } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Product } from "@/models/Product";
+import { saveFile, uploadFile } from "@/services/file-endpoints";
+import { getProducts } from "@/services/product-endpoints";
+import { addSnapshotItem, createSnapshot } from "@/services/snapshot-endpoints";
 
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
@@ -11,35 +18,48 @@ import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 registerPlugin(FilePondPluginImagePreview);
 
-const inputClasses =
-  "bg-slate-800 border border-slate-700 text-slate-100 px-3 py-2 rounded-lg text-sm outline-none transition-colors duration-200 focus:border-indigo-500 placeholder:text-slate-400/60";
-
-const labelClasses =
-  "block text-[0.8125rem] font-medium text-slate-400 mb-1.5 uppercase tracking-wider";
-
 interface PendingItem {
   product: Product;
   quantity: number;
 }
 
-export default function SnapshotForm() {
+interface SnapshotFormProps {
+  onSaved?: () => void;
+}
+
+export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
   const [name, setName] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [quantities, setQuantities] = useState<Record<number, string>>({});
   const [filePath, setFilePath] = useState<string | null>(null);
-  const [, setTempFilename] = useState<string | null>(null);
+  const [tempFilename, setTempFilename] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadProducts = () => {
     getProducts()
       .then((res) => setProducts(res.data))
-      .catch(() => setError("Failed to load products"));
+      .catch(() => setError("Failed to load products."));
+  };
+
+  useEffect(() => {
+    loadProducts();
   }, []);
 
+  const availableProducts = useMemo(
+    () => products.filter((product) => !pendingItems.some((item) => item.product.id === product.id)),
+    [products, pendingItems],
+  );
+
+  const totalQuantity = pendingItems.reduce((sum, item) => sum + item.quantity, 0);
+
   const handleFileUpload = async (file: File) => {
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
     try {
       const uploadRes = await uploadFile(file);
       const tempName = uploadRes.data.temp_filename;
@@ -47,47 +67,49 @@ export default function SnapshotForm() {
 
       const saveRes = await saveFile(tempName, "snapshots");
       setFilePath(saveRes.data.file_path);
-      setError(null);
     } catch {
-      setError("Failed to upload file");
+      setError("Failed to upload and save the image.");
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleAddItem = (product: Product) => {
-    const qty = parseInt(quantities[product.id] || "0", 10);
+    const qty = Number.parseInt(quantities[product.id] || "0", 10);
     if (qty <= 0) return;
 
-    const existing = pendingItems.find((i) => i.product.id === product.id);
-    if (existing) {
-      setPendingItems(
-        pendingItems.map((i) =>
-          i.product.id === product.id
-            ? { ...i, quantity: i.quantity + qty }
-            : i
-        )
+    setPendingItems((items) => {
+      const existing = items.find((item) => item.product.id === product.id);
+      if (!existing) return [...items, { product, quantity: qty }];
+      return items.map((item) =>
+        item.product.id === product.id ? { ...item, quantity: item.quantity + qty } : item,
       );
-    } else {
-      setPendingItems([...pendingItems, { product, quantity: qty }]);
-    }
-
+    });
     setQuantities({ ...quantities, [product.id]: "" });
   };
 
-  const handleRemoveItem = (productId: number) => {
-    setPendingItems(pendingItems.filter((i) => i.product.id !== productId));
+  const updatePendingQuantity = (productId: number, quantity: number) => {
+    if (quantity <= 0) return;
+    setPendingItems((items) =>
+      items.map((item) => (item.product.id === productId ? { ...item, quantity } : item)),
+    );
+  };
+
+  const removePendingItem = (productId: number) => {
+    setPendingItems((items) => items.filter((item) => item.product.id !== productId));
   };
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("Snapshot name is required");
+      setError("Snapshot name is required.");
       return;
     }
     if (!filePath) {
-      setError("Please upload an image first");
+      setError("Upload an image before saving the snapshot.");
       return;
     }
     if (pendingItems.length === 0) {
-      setError("Add at least one product");
+      setError("Add at least one product row to the snapshot.");
       return;
     }
 
@@ -110,171 +132,160 @@ export default function SnapshotForm() {
         });
       }
 
-      setSuccess(`Snapshot "${name}" created successfully!`);
+      setSuccess(`Snapshot "${name.trim()}" saved with ${pendingItems.length} item rows.`);
       setName("");
       setFilePath(null);
       setTempFilename(null);
       setPendingItems([]);
       setQuantities({});
+      onSaved?.();
     } catch {
-      setError("Failed to save snapshot");
+      setError("Failed to save snapshot.");
     } finally {
       setSaving(false);
     }
   };
 
-  const availableProducts = products.filter(
-    (p) => !pendingItems.some((i) => i.product.id === p.id)
-  );
-
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4 text-slate-100">
-        New Inventory Snapshot
-      </h2>
-
-      {error && (
-        <p className="text-rose-500 bg-rose-500/10 border border-rose-500/20 px-3 py-2 rounded-lg text-[0.8125rem] mb-4">
-          {error}
-        </p>
-      )}
-      {success && (
-        <p className="text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-lg text-[0.8125rem] mb-4">
-          {success}
-        </p>
-      )}
-
-      <div className="mb-5">
-        <label className={labelClasses}>Snapshot Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. March 2026 Count"
-          className={`${inputClasses} w-full`}
-        />
-      </div>
-
-      <div className="mb-5">
-        <label className={labelClasses}>Snapshot Image</label>
-        <FilePond
-          allowMultiple={false}
-          acceptedFileTypes={["image/*"]}
-          labelIdle='Drag & drop an image or <span class="filepond--label-action">Browse</span>'
-          onaddfile={(_error, fileItem) => {
-            if (fileItem?.file) {
-              handleFileUpload(fileItem.file as File);
-            }
-          }}
-          onremovefile={() => {
-            setFilePath(null);
-            setTempFilename(null);
-          }}
-        />
-        {filePath && (
-          <p className="text-emerald-500 text-[0.8125rem] mt-1.5">
-            ✓ Image saved: {filePath}
-          </p>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <CardTitle>New snapshot</CardTitle>
+            <CardDescription>Upload an image, pick products, and save a snapshot through the same API flow.</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge tone={filePath ? "green" : "neutral"}>{filePath ? "image saved" : "image pending"}</Badge>
+            <Badge tone={pendingItems.length ? "blue" : "neutral"}>{pendingItems.length} rows · {totalQuantity} units</Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {error && (
+          <div className="rounded-2xl border border-[#F7B8A4] bg-[#FFF1ED] px-4 py-3 text-sm font-semibold text-[#C2410C]">
+            {error}
+          </div>
         )}
-      </div>
+        {success && (
+          <div className="flex items-center gap-2 rounded-2xl border border-[#B6E8CC] bg-[#E3F6EC] px-4 py-3 text-sm font-semibold text-[#00684A]">
+            <CheckCircle2 size={17} />
+            {success}
+          </div>
+        )}
 
-      <div className="mb-5">
-        <label className={labelClasses}>Added Items</label>
-        {pendingItems.length === 0 ? (
-          <p className="text-slate-400 text-sm italic">No items added yet.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {pendingItems.map((item) => (
-              <div
-                key={item.product.id}
-                className="flex items-center justify-between px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-lg"
-              >
-                <span className="font-medium flex-1">
-                  {item.product.name}
-                </span>
-                <div className="flex items-center gap-1.5 text-indigo-500 font-semibold text-sm mx-3">
-                  <span>×</span>
-                  <input
+        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">Snapshot name</span>
+              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. May 2026 Count" />
+            </label>
+
+            <div>
+              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">Snapshot image</span>
+              <FilePond
+                allowMultiple={false}
+                acceptedFileTypes={["image/*"]}
+                labelIdle='Drop an image or <span class="filepond--label-action">browse</span>'
+                onaddfile={(_error, fileItem) => {
+                  if (fileItem?.file) {
+                    handleFileUpload(fileItem.file as File);
+                  }
+                }}
+                onremovefile={() => {
+                  setFilePath(null);
+                  setTempFilename(null);
+                }}
+              />
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                {uploading && <Badge tone="blue">uploading</Badge>}
+                {tempFilename && <Badge tone="neutral">temp: {tempFilename}</Badge>}
+                {filePath && <Badge tone="green">saved: {filePath}</Badge>}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#D9E4DD] bg-[#F7FAF8] p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-medium text-[#10231B]">Added items</p>
+                <p className="text-sm text-[#5B6B63]">These rows will be POSTed to /snapshots/items after the snapshot is created.</p>
+              </div>
+              <PackagePlus size={20} className="text-[#00684A]" />
+            </div>
+            {pendingItems.length === 0 ? (
+              <EmptyState icon={ImagePlus} title="No items added" description="Add product quantities from the list below." className="min-h-[150px] bg-white" />
+            ) : (
+              <div className="space-y-2">
+                {pendingItems.map((item) => (
+                  <div key={item.product.id} className="flex items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-[#10231B]">{item.product.name}</p>
+                      <p className="text-xs text-[#5B6B63]">{item.product.sku || `Product #${item.product.id}`}</p>
+                    </div>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(event) => updatePendingQuantity(item.product.id, Number(event.target.value))}
+                      className="w-20 text-center"
+                    />
+                    <Button size="icon" variant="secondary" aria-label="Remove item" onClick={() => removePendingItem(item.product.id)}>
+                      <Trash2 size={15} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-[#10231B]">Add products</p>
+              <p className="text-sm text-[#5B6B63]">Pick inventory rows and quantities for a manual snapshot.</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={loadProducts}>
+              Refresh products
+            </Button>
+          </div>
+
+          {availableProducts.length === 0 ? (
+            <EmptyState
+              icon={PackagePlus}
+              title={products.length === 0 ? "No products available" : "All products added"}
+              description={products.length === 0 ? "Create products first, then return here to build a snapshot." : "Remove a row above to add it again."}
+            />
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {availableProducts.map((product) => (
+                <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-[#10231B]">{product.name}</p>
+                    <p className="text-xs text-[#5B6B63]">{product.sku || `Product #${product.id}`} · ₺{product.value}</p>
+                  </div>
+                  <Input
                     type="number"
                     min="1"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (val > 0) {
-                        setPendingItems(
-                          pendingItems.map((i) =>
-                            i.product.id === item.product.id
-                              ? { ...i, quantity: val }
-                              : i
-                          )
-                        );
-                      }
-                    }}
-                    className={`${inputClasses} w-[70px] text-center`}
+                    value={quantities[product.id] || ""}
+                    onChange={(event) => setQuantities({ ...quantities, [product.id]: event.target.value })}
+                    placeholder="Qty"
+                    className="w-24"
                   />
+                  <Button variant="soft" size="sm" onClick={() => handleAddItem(product)}>
+                    Add
+                  </Button>
                 </div>
-                <button
-                  onClick={() => handleRemoveItem(item.product.id)}
-                  className="cursor-pointer font-medium rounded-lg transition-all duration-200 text-xs px-2.5 py-1 bg-transparent text-rose-500 border border-rose-500 hover:bg-rose-500 hover:text-white"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      <div className="mb-5">
-        <label className={labelClasses}>Add Products</label>
-        {availableProducts.length === 0 ? (
-          <p className="text-slate-400 text-sm italic">
-            {products.length === 0
-              ? "No products created yet. Go to Products tab first."
-              : "All products added."}
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {availableProducts.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg"
-              >
-                <span className="flex-1 text-sm">
-                  {p.name}{" "}
-                  <span className="text-emerald-500 text-[0.8125rem] font-semibold">
-                    ₺{p.value}
-                  </span>
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantities[p.id] || ""}
-                  onChange={(e) =>
-                    setQuantities({ ...quantities, [p.id]: e.target.value })
-                  }
-                  placeholder="Qty"
-                  className={`${inputClasses} w-[80px]`}
-                />
-                <button
-                  onClick={() => handleAddItem(p)}
-                  className="cursor-pointer font-medium rounded-lg transition-all duration-200 text-xs px-2.5 py-1 bg-slate-800 text-slate-100 border border-slate-700 hover:border-indigo-500 hover:text-indigo-500"
-                >
-                  Add
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="border-none cursor-pointer font-medium rounded-lg transition-all duration-200 text-base px-8 py-3 w-full mt-4 bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {saving ? "Saving..." : "Save Snapshot"}
-      </button>
-    </div>
+        <Button size="lg" className="w-full" disabled={saving || uploading} onClick={handleSave}>
+          {saving ? <UploadCloud size={18} className="animate-pulse" /> : <Save size={18} />}
+          {saving ? "Saving snapshot..." : "Save Snapshot"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Float, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from db.session import Base
 
@@ -10,6 +10,7 @@ class InventorySnapshotItem(Base):
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     snapshot_id = Column(Integer, ForeignKey("inventory_snapshots.id"), nullable=False)
     quantity = Column(Integer, nullable=False)
+    confidence_score = Column(Float, nullable=True)
 
     # Relationships (like Laravel's belongsTo)
     product = relationship("Product")

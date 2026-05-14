@@ -1,121 +1,335 @@
-import { useState, useEffect } from "react";
-import { Product } from "../models/Product";
+import { useEffect, useMemo, useState } from "react";
 import {
-  getProducts,
-  createProduct,
-  deleteProduct,
-} from "../services/product-endpoints";
+  Edit3,
+  MapPin,
+  Package,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 
-const inputClasses =
-  "bg-slate-800 border border-slate-700 text-slate-100 px-3 py-2 rounded-lg text-sm outline-none transition-colors duration-200 focus:border-indigo-500 placeholder:text-slate-400/60";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { ProductDTO, ProductUpdateDTO } from "@/dtos/ProductDTO";
+import { Product } from "@/models/Product";
+import { createProduct, deleteProduct, getProducts, updateProduct } from "@/services/product-endpoints";
 
-interface Props {
-  onProductsChange?: () => void;
+const emptyDraft: ProductDTO = {
+  name: "",
+  value: 0,
+  sku: "",
+  location_site: "",
+  location_aisle: "",
+  location_rack: "",
+};
+
+function productLocation(product: Product | ProductDTO) {
+  return [product.location_site, product.location_aisle, product.location_rack]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" / ");
 }
 
-export default function ProductsPage({ onProductsChange }: Props) {
+function toEditDraft(product: Product): ProductUpdateDTO {
+  return {
+    name: product.name,
+    value: product.value,
+    sku: product.sku || "",
+    qr_code_pattern: product.qr_code_pattern || "",
+    location_site: product.location_site || "",
+    location_aisle: product.location_aisle || "",
+    location_rack: product.location_rack || "",
+  };
+}
+
+function cleanDraft(draft: ProductDTO | ProductUpdateDTO) {
+  return Object.fromEntries(
+    Object.entries(draft).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value]),
+  ) as ProductDTO | ProductUpdateDTO;
+}
+
+export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [newName, setNewName] = useState("");
-  const [newValue, setNewValue] = useState("");
+  const [draft, setDraft] = useState<ProductDTO>(emptyDraft);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<ProductUpdateDTO>({});
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = () => {
+    setLoading(true);
+    setError(null);
+    getProducts()
+      .then((res) => setProducts(res.data))
+      .catch(() => setError("Failed to load products from the API."))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = () => {
-    getProducts()
-      .then((res) => {
-        setProducts(res.data);
-        onProductsChange?.();
-      })
-      .catch(() => setError("Failed to load products"));
-  };
+  const filteredProducts = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return products;
+    return products.filter((product) => {
+      const haystack = [
+        product.name,
+        product.sku,
+        product.location_site,
+        product.location_aisle,
+        product.location_rack,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalized);
+    });
+  }, [products, query]);
 
-  const handleAdd = () => {
-    const name = newName.trim();
-    const value = parseInt(newValue, 10);
-    if (!name) return;
-    if (isNaN(value)) {
-      setError("Value must be a number");
+  const handleCreate = () => {
+    const cleaned = cleanDraft(draft) as ProductDTO;
+    const value = Number(cleaned.value);
+    if (!cleaned.name) {
+      setError("Product name is required.");
       return;
     }
+    if (!cleaned.sku) {
+      setError("SKU is required.");
+      return;
+    }
+    if (Number.isNaN(value)) {
+      setError("Value must be a valid number.");
+      return;
+    }
+
+    setSaving(true);
     setError(null);
-    createProduct({ name, value })
+    createProduct({ ...cleaned, value })
       .then(() => {
-        setNewName("");
-        setNewValue("");
+        setDraft(emptyDraft);
         fetchProducts();
       })
-      .catch(() => setError("Failed to create product"));
+      .catch(() => setError("Failed to create product."))
+      .finally(() => setSaving(false));
+  };
+
+  const startEditing = (product: Product) => {
+    setEditingId(product.id);
+    setEditDraft(toEditDraft(product));
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditDraft({});
+  };
+
+  const handleUpdate = (productId: number) => {
+    const cleaned = cleanDraft(editDraft) as ProductUpdateDTO;
+    if (!cleaned.name) {
+      setError("Product name is required.");
+      return;
+    }
+    if (!cleaned.sku) {
+      setError("SKU is required.");
+      return;
+    }
+
+    const value = Number(cleaned.value);
+    if (Number.isNaN(value)) {
+      setError("Value must be a valid number.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    updateProduct(productId, { ...cleaned, value })
+      .then(() => {
+        cancelEditing();
+        fetchProducts();
+      })
+      .catch(() => setError("Failed to update product."))
+      .finally(() => setSaving(false));
   };
 
   const handleDelete = (id: number) => {
+    setError(null);
     deleteProduct(id)
       .then(() => fetchProducts())
-      .catch(() => setError("Failed to delete product"));
+      .catch(() => setError("Failed to delete product."));
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4 text-slate-100">Products</h2>
-
-      {error && (
-        <p className="text-rose-500 bg-rose-500/10 border border-rose-500/20 px-3 py-2 rounded-lg text-[0.8125rem] mb-4">
-          {error}
-        </p>
-      )}
-
-      <div className="flex gap-2 items-center mb-5">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="Product name"
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          className={`${inputClasses} flex-1`}
-        />
-        <input
-          type="number"
-          value={newValue}
-          onChange={(e) => setNewValue(e.target.value)}
-          placeholder="Value"
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          className={`${inputClasses} w-[100px]`}
-        />
-        <button
-          onClick={handleAdd}
-          className="border-none cursor-pointer font-medium rounded-lg transition-all duration-200 text-sm px-4 py-2 bg-indigo-500 text-white hover:bg-indigo-600"
-        >
-          Add Product
-        </button>
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+        <div>
+          <Badge tone="green">Products API</Badge>
+          <h1 className="mt-3 text-3xl font-light text-[#10231B]">Products</h1>
+          <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">
+            Table-first CRUD tester for inventory products with required SKU and warehouse location fields.
+          </p>
+        </div>
+        <Button variant="secondary" onClick={fetchProducts} disabled={loading}>
+          <RefreshCw size={16} />
+          Refresh
+        </Button>
       </div>
 
-      {products.length === 0 ? (
-        <p className="text-slate-400 text-sm italic">No products yet.</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {products.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg transition-colors duration-200 hover:border-indigo-500"
-            >
-              <div className="flex items-center gap-3">
-                <span className="font-medium">{p.name}</span>
-                <span className="text-emerald-500 text-[0.8125rem] font-semibold">
-                  ₺{p.value}
-                </span>
-              </div>
-              <button
-                onClick={() => handleDelete(p.id)}
-                className="cursor-pointer font-medium rounded-lg transition-all duration-200 text-xs px-2.5 py-1 bg-transparent text-rose-500 border border-rose-500 hover:bg-rose-500 hover:text-white"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+      {error && (
+        <div className="rounded-2xl border border-[#F7B8A4] bg-[#FFF1ED] px-4 py-3 text-sm font-semibold text-[#C2410C]">
+          {error}
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Create product</CardTitle>
+          <CardDescription>
+            Create inventory rows with the backend product schema, including required SKU and optional location fields.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
+            <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Product name" />
+            <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder="SKU" />
+            <Input
+              type="number"
+              value={draft.value || ""}
+              onChange={(event) => setDraft({ ...draft, value: Number(event.target.value) })}
+              placeholder="Value"
+            />
+            <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder="Site" />
+            <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder="Aisle" />
+            <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder="Rack" />
+            <Button onClick={handleCreate} disabled={saving}>
+              <Plus size={16} />
+              Add
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <CardTitle>Product table</CardTitle>
+            <CardDescription>{filteredProducts.length} visible products from /products</CardDescription>
+          </div>
+          <div className="w-full xl:w-80">
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} leftSlot={<Search size={16} />} placeholder="Search name, SKU, location..." />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <EmptyState icon={Package} title="Loading products" description="Calling GET /products and waiting for the API response." />
+          ) : filteredProducts.length === 0 ? (
+            <EmptyState icon={Package} title="No products found" description="Create a product or clear the search filter to see rows here." />
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-[#D9E4DD]">
+              <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm">
+                <thead>
+                  <tr className="bg-[#F7FAF8] text-xs font-medium uppercase text-[#5B6B63]">
+                    {["Product", "SKU", "Value", "Location", "Schema Fields", "Actions"].map((heading) => (
+                      <th key={heading} className="border-b border-[#D9E4DD] px-4 py-3">
+                        {heading}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredProducts.map((product) => {
+                    const isEditing = editingId === product.id;
+                    const location = productLocation(product);
+                    return (
+                      <tr key={product.id} className="hover:bg-[#F7FAF8]">
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          {isEditing ? (
+                            <Input value={editDraft.name || ""} onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })} />
+                          ) : (
+                            <div>
+                              <p className="font-medium text-[#10231B]">{product.name}</p>
+                              <p className="text-xs text-[#5B6B63]">Product #{product.id}</p>
+                            </div>
+                          )}
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          {isEditing ? (
+                            <Input value={editDraft.sku || ""} onChange={(event) => setEditDraft({ ...editDraft, sku: event.target.value })} />
+                          ) : (
+                            <Badge tone={product.sku ? "green" : "neutral"}>{product.sku || "pending"}</Badge>
+                          )}
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={editDraft.value ?? ""}
+                              onChange={(event) => setEditDraft({ ...editDraft, value: Number(event.target.value) })}
+                            />
+                          ) : (
+                            <span className="font-semibold text-[#00684A]">₺{product.value}</span>
+                          )}
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          {isEditing ? (
+                            <div className="grid grid-cols-3 gap-2">
+                              <Input value={editDraft.location_site || ""} onChange={(event) => setEditDraft({ ...editDraft, location_site: event.target.value })} placeholder="Site" />
+                              <Input value={editDraft.location_aisle || ""} onChange={(event) => setEditDraft({ ...editDraft, location_aisle: event.target.value })} placeholder="Aisle" />
+                              <Input value={editDraft.location_rack || ""} onChange={(event) => setEditDraft({ ...editDraft, location_rack: event.target.value })} placeholder="Rack" />
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-2 text-[#5B6B63]">
+                              <MapPin size={15} />
+                              {location || "Location pending"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge tone={product.qr_code_pattern ? "blue" : "neutral"}>QR {product.qr_code_pattern ? "set" : "pending"}</Badge>
+                            <Badge tone={product.sku ? "green" : "warning"}>SKU {product.sku ? "ready" : "missing"}</Badge>
+                          </div>
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          {isEditing ? (
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => handleUpdate(product.id)} disabled={saving}>
+                                <Save size={14} />
+                                Save
+                              </Button>
+                              <Button size="sm" variant="secondary" onClick={cancelEditing}>
+                                <X size={14} />
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button size="icon" variant="secondary" aria-label="Edit product" onClick={() => startEditing(product)}>
+                                <Edit3 size={15} />
+                              </Button>
+                              <Button size="icon" variant="danger" aria-label="Delete product" onClick={() => handleDelete(product.id)}>
+                                <Trash2 size={15} />
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
