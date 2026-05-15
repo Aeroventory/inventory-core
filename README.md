@@ -53,6 +53,13 @@ This will start:
 
 Database migrations run automatically on startup.
 
+If `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` are present in `.env`
+before the `users` migration runs, Docker Compose will seed that admin account
+while creating the table. If the `users` table already exists and is empty,
+register the first admin through `POST /auth/register`; if it already contains
+users without an admin, promote/create one manually with a bcrypt password hash
+or recreate the database volume.
+
 ### 4. Verify services are running
 
 - API Health: http://localhost:8003/health
@@ -77,17 +84,19 @@ docker compose -f infra/docker-compose.yml down -v
 
 All configuration is managed through the root `.env` file:
 
-| Variable            | Default                 | Description               |
-| ------------------- | ----------------------- | ------------------------- |
-| `POSTGRES_USER`     | `postgres`              | Database username         |
-| `POSTGRES_PASSWORD` | `postgres`              | Database password         |
-| `POSTGRES_DB`       | `inventory`             | Database name             |
-| `SECRET_KEY`        | —                       | API secret key (required) |
-| `API_PORT`          | `8003`                  | API host port             |
-| `WEB_PORT`          | `3000`                  | Web app host port         |
-| `DB_PORT`           | `5432`                  | Database host port        |
-| `CORS_ORIGINS`      | `http://localhost:3000` | Allowed CORS origins      |
-| `VITE_API_URL`      | `http://localhost:8003` | API URL for the frontend  |
+| Variable                 | Default                 | Description                                      |
+| ------------------------ | ----------------------- | ------------------------------------------------ |
+| `POSTGRES_USER`          | `postgres`              | Database username                                |
+| `POSTGRES_PASSWORD`      | `postgres`              | Database password                                |
+| `POSTGRES_DB`            | `inventory`             | Database name                                    |
+| `SECRET_KEY`             | —                       | API secret key (required)                        |
+| `DEFAULT_ADMIN_USERNAME` | —                       | Admin username seeded during migration if set    |
+| `DEFAULT_ADMIN_PASSWORD` | —                       | Admin password seeded during migration if set    |
+| `API_PORT`               | `8003`                  | API host port                                    |
+| `WEB_PORT`               | `3000`                  | Web app host port                                |
+| `DB_PORT`                | `5432`                  | Database host port                               |
+| `CORS_ORIGINS`           | `http://localhost:3000` | Allowed CORS origins                             |
+| `VITE_API_URL`           | `http://localhost:8003` | API URL for the frontend                         |
 
 ## Development
 

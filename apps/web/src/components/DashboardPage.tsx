@@ -28,6 +28,8 @@ interface HealthStatus {
 
 interface DashboardPageProps {
   health: HealthStatus | null;
+  isAdmin: boolean;
+  canAccessPlanner: boolean;
   onNavigate: (path: string) => void;
   onRefreshHealth: () => void;
 }
@@ -59,7 +61,13 @@ function MetricCard({ icon: Icon, label, value, description, tone = "green" }: M
   );
 }
 
-export default function DashboardPage({ health, onNavigate, onRefreshHealth }: DashboardPageProps) {
+export default function DashboardPage({
+  health,
+  isAdmin,
+  canAccessPlanner,
+  onNavigate,
+  onRefreshHealth,
+}: DashboardPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +97,12 @@ export default function DashboardPage({ health, onNavigate, onRefreshHealth }: D
 
   const totalUnits = latestSnapshot?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const trackedValue = products.reduce((sum, product) => sum + product.value, 0);
+  const shortcuts = [
+    { label: isAdmin ? "Create or edit products" : "Browse products", path: "/products", icon: Package },
+    { label: isAdmin ? "Upload image and save snapshot" : "Review snapshots", path: "/snapshots", icon: UploadCloud },
+    ...(canAccessPlanner ? [{ label: "Open production plan", path: "/production-plan", icon: Activity }] : []),
+    ...(isAdmin ? [{ label: "Open the kitchen design contract", path: "/kitchen", icon: Activity }] : []),
+  ];
 
   return (
     <div className="space-y-6">
@@ -109,10 +123,12 @@ export default function DashboardPage({ health, onNavigate, onRefreshHealth }: D
             <RefreshCw size={16} />
             Check API
           </Button>
-          <Button onClick={() => onNavigate("/snapshots")}>
-            <UploadCloud size={16} />
-            New Snapshot
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => onNavigate("/snapshots")}>
+              <UploadCloud size={16} />
+              New Snapshot
+            </Button>
+          )}
         </div>
       </div>
 
@@ -208,11 +224,7 @@ export default function DashboardPage({ health, onNavigate, onRefreshHealth }: D
             <CardDescription>Move through the testing loop without leaving the console.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { label: "Create or edit products", path: "/products", icon: Package },
-              { label: "Upload image and save snapshot", path: "/snapshots", icon: UploadCloud },
-              { label: "Open the kitchen design contract", path: "/kitchen", icon: Activity },
-            ].map((item) => (
+            {shortcuts.map((item) => (
               <button
                 key={item.path}
                 onClick={() => onNavigate(item.path)}

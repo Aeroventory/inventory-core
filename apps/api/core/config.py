@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str  # No default — must be set in .env
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    DEFAULT_ADMIN_USERNAME: str | None = None
+    DEFAULT_ADMIN_PASSWORD: str | None = None
 
     # Database — individual parts, URL constructed via property
     POSTGRES_USER: str = "postgres"

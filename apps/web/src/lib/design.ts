@@ -1,3 +1,5 @@
+import { UserRole } from "@/types/auth";
+
 export const palette = {
   background: "#F7FAF8",
   surface: "#FFFFFF",
@@ -17,9 +19,22 @@ export const palette = {
 
 export const navItems = [
   { id: "dashboard", label: "Dashboard", path: "/", description: "Health and workflow overview" },
-  { id: "products", label: "Products", path: "/products", description: "CRUD endpoint tester" },
+  { id: "products", label: "Products", path: "/products", description: "Inventory product catalog" },
   { id: "snapshots", label: "Snapshots", path: "/snapshots", description: "Image and inventory snapshots" },
-  { id: "kitchen", label: "Kitchen", path: "/kitchen", description: "Design system contract" },
+  {
+    id: "productionPlan",
+    label: "Production Plan",
+    path: "/production-plan",
+    description: "Planner workspace",
+    allowedRoles: ["admin", "planner"] satisfies readonly UserRole[],
+  },
+  {
+    id: "kitchen",
+    label: "Kitchen",
+    path: "/kitchen",
+    description: "Design system contract",
+    allowedRoles: ["admin"] satisfies readonly UserRole[],
+  },
 ] as const;
 
 export type ViewId = (typeof navItems)[number]["id"];
