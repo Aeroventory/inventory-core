@@ -1,0 +1,445 @@
+{
+  "common": {
+    "brand": {
+      "name": "Aeroventory",
+      "consoleName": "Inventory Core Konsolu",
+      "console": "Konsol"
+    },
+    "actions": {
+      "add": "Ekle",
+      "cancel": "İptal",
+      "checkApi": "API'yi kontrol et",
+      "delete": "Sil",
+      "edit": "Düzenle",
+      "newSnapshot": "Yeni Sayım Kaydı",
+      "refresh": "Yenile",
+      "refreshProducts": "Ürünleri yenile",
+      "save": "Kaydet",
+      "saveSnapshot": "Sayım kaydını kaydet",
+      "savingSnapshot": "Sayım kaydı kaydediliyor...",
+      "signIn": "Giriş yap",
+      "signingIn": "Giriş yapılıyor...",
+      "viewSnapshots": "Sayım kayıtlarını görüntüle"
+    },
+    "aria": {
+      "closeNavigation": "Navigasyonu kapat",
+      "closeNavigationOverlay": "Navigasyon katmanını kapat",
+      "deleteProduct": "Ürünü sil",
+      "editProduct": "Ürünü düzenle",
+      "logOut": "Çıkış yap",
+      "openNavigation": "Navigasyonu aç",
+      "refreshApiHealth": "API durumunu yenile",
+      "removeItem": "Öğeyi kaldır"
+    },
+    "badges": {
+      "apiStatus": "API {{status}}",
+      "apiUnchecked": "API kontrol edilmedi",
+      "confidencePending": "güven beklemede",
+      "confidencePercent": "%{{value}}",
+      "dbStatus": "DB {{status}}",
+      "filePath": "/{{path}}",
+      "imagePending": "görsel beklemede",
+      "imageSaved": "görsel kaydedildi",
+      "qrStatus": "QR {{status}}",
+      "quantity": "x {{count}}",
+      "savedFile": "kaydedildi: {{path}}",
+      "skuStatus": "SKU {{status}}",
+      "tempFile": "geçici: {{filename}}",
+      "uploading": "yükleniyor"
+    },
+    "formats": {
+      "currencyTry": "₺{{value}}",
+      "compactPair": "{{first}} · {{second}}",
+      "itemRows_one": "{{count}} ürün satırı",
+      "itemRows_other": "{{count}} ürün satırı",
+      "productId": "Ürün #{{id}}",
+      "trackedProductValue": "Takip edilen ürünlerin toplam değeri: {{value}}",
+      "units_one": "{{count}} adet",
+      "units_other": "{{count}} adet",
+      "visibleProducts_one": "/products içinde {{count}} ürün görünüyor",
+      "visibleProducts_other": "/products içinde {{count}} ürün görünüyor"
+    },
+    "labels": {
+      "actions": "İşlemler",
+      "aisle": "Koridor",
+      "confidence": "Güven",
+      "line": "Hat",
+      "location": "Konum",
+      "product": "Ürün",
+      "quantity": "Miktar",
+      "rack": "Raf",
+      "schemaFields": "Şema Alanları",
+      "site": "Tesis",
+      "sku": "SKU",
+      "status": "Durum",
+      "target": "Hedef",
+      "value": "Değer"
+    },
+    "roles": {
+      "admin": "yönetici",
+      "planner": "planlayıcı",
+      "viewer": "görüntüleyici"
+    },
+    "states": {
+      "checking": "kontrol ediliyor",
+      "connected": "bağlı",
+      "degraded": "performansı düşük",
+      "disconnected": "bağlantı yok",
+      "healthy": "sağlıklı",
+      "missing": "eksik",
+      "pending": "beklemede",
+      "ready": "hazır",
+      "set": "ayarlı",
+      "unknown": "bilinmiyor"
+    },
+    "language": {
+      "label": "Dil",
+      "english": "İngilizce",
+      "turkish": "Türkçe"
+    }
+  },
+  "app": {
+    "loading": {
+      "title": "Çalışma alanı yükleniyor",
+      "description": "Konsolu açmadan önce kayıtlı oturumunuz kontrol ediliyor."
+    }
+  },
+  "nav": {
+    "dashboard": {
+      "label": "Gösterge Paneli",
+      "description": "Durum ve iş akışı genel görünümü"
+    },
+    "products": {
+      "label": "Ürünler",
+      "description": "Envanter ürün kataloğu"
+    },
+    "snapshots": {
+      "label": "Sayım Kayıtları",
+      "description": "Görsel ve envanter sayım kayıtları"
+    },
+    "productionPlan": {
+      "label": "Üretim Planı",
+      "description": "Planlama çalışma alanı"
+    },
+    "kitchen": {
+      "label": "Mutfak",
+      "description": "Tasarım sistemi sözleşmesi"
+    }
+  },
+  "layout": {
+    "signedIn": "Giriş yapıldı",
+    "defaultRole": "görüntüleyici",
+    "accessDescription": "Envanter iş akışları için {{role}} erişimi.",
+    "fallbackInitials": "KU"
+  },
+  "auth": {
+    "title": "Giriş yap",
+    "description": "Çalışma alanını açmak için envanter hesabınızı kullanın.",
+    "username": "Kullanıcı adı",
+    "password": "Şifre",
+    "error": "Kullanıcı adı veya şifre hatalı."
+  },
+  "dashboard": {
+    "errors": {
+      "loadData": "Gösterge paneli verileri API'den yüklenemedi."
+    },
+    "hero": {
+      "title": "Envanter iş akışı konsolu",
+      "description": "Postman açmadan ürünleri, sayım kayıtlarını, yüklemeleri ve API durumunu test etmek için hafif, endpoint odaklı bir çalışma alanı."
+    },
+    "metrics": {
+      "products": {
+        "label": "Ürünler",
+        "description": "/products üzerinden dönen satırlar"
+      },
+      "latestUnits": {
+        "label": "Son Birim Sayısı",
+        "description": "En yeni sayım kaydındaki toplam miktar"
+      },
+      "snapshots": {
+        "label": "Sayım Kayıtları",
+        "description": "Kaydedilmiş görsel destekli envanter çalışmaları"
+      },
+      "dbStatus": {
+        "label": "DB Durumu"
+      },
+      "loadingValue": "..."
+    },
+    "shortcuts": {
+      "createOrEditProducts": "Ürün oluştur veya düzenle",
+      "browseProducts": "Ürünlere göz at",
+      "uploadImageAndSaveSnapshot": "Görsel yükle ve sayım kaydı oluştur",
+      "reviewSnapshots": "Sayım kayıtlarını incele",
+      "openProductionPlan": "Üretim planını aç",
+      "openKitchen": "Mutfak tasarım sözleşmesini aç",
+      "title": "İş akışı kısayolları",
+      "description": "Konsoldan ayrılmadan test döngüsü içinde ilerleyin."
+    },
+    "latestSnapshot": {
+      "title": "Son sayım kaydı",
+      "description": "Görsel iş akışının faydalı envanter satırları üretip üretmediğini hızlıca kontrol edin.",
+      "noSnapshotsTitle": "Henüz sayım kaydı yok",
+      "noSnapshotsDescription": "En son algılanan envanteri burada görmek için bir görsel yükleyin ve sayım kaydı oluşturun."
+    }
+  },
+  "products": {
+    "badge": "Ürünler API'si",
+    "title": "Ürünler",
+    "description": "Zorunlu SKU ve depo konumu alanlarına sahip envanter ürünleri için tablo odaklı CRUD test aracı.",
+    "errors": {
+      "load": "Ürünler API'den yüklenemedi.",
+      "nameRequired": "Ürün adı zorunludur.",
+      "skuRequired": "SKU zorunludur.",
+      "invalidValue": "Değer geçerli bir sayı olmalıdır.",
+      "create": "Ürün oluşturulamadı.",
+      "update": "Ürün güncellenemedi.",
+      "delete": "Ürün silinemedi."
+    },
+    "create": {
+      "title": "Ürün oluştur",
+      "description": "Zorunlu SKU ve isteğe bağlı konum alanları dahil olmak üzere backend ürün şemasıyla envanter satırları oluşturun.",
+      "placeholders": {
+        "name": "Ürün adı",
+        "sku": "SKU",
+        "value": "Değer",
+        "site": "Tesis",
+        "aisle": "Koridor",
+        "rack": "Raf"
+      }
+    },
+    "table": {
+      "title": "Ürün tablosu",
+      "searchPlaceholder": "Ad, SKU, konum ara...",
+      "loadingTitle": "Ürünler yükleniyor",
+      "loadingDescription": "GET /products çağrılıyor ve API yanıtı bekleniyor.",
+      "emptyTitle": "Ürün bulunamadı",
+      "emptyDescription": "Burada satırları görmek için bir ürün oluşturun veya arama filtresini temizleyin.",
+      "locationPending": "Konum beklemede"
+    }
+  },
+  "snapshots": {
+    "page": {
+      "badge": "Sayım Kayıtları API'si",
+      "title": "Sayım Kayıtları",
+      "description": "Tek bir iş akışında görsel yükleyin, manuel sayım satırları oluşturun ve kayıtlı envanter geçmişini inceleyin."
+    },
+    "form": {
+      "errors": {
+        "loadProducts": "Ürünler yüklenemedi.",
+        "uploadImage": "Görsel yüklenip kaydedilemedi.",
+        "snapshotNameRequired": "Sayım kaydı adı zorunludur.",
+        "uploadBeforeSave": "Sayım kaydını kaydetmeden önce bir görsel yükleyin.",
+        "addAtLeastOneProduct": "Sayım kaydına en az bir ürün satırı ekleyin.",
+        "save": "Sayım kaydı kaydedilemedi."
+      },
+      "success_one": "\"{{name}}\" sayım kaydı {{count}} ürün satırıyla kaydedildi.",
+      "success_other": "\"{{name}}\" sayım kaydı {{count}} ürün satırıyla kaydedildi.",
+      "title": "Yeni sayım kaydı",
+      "description": "Bir görsel yükleyin, ürünleri seçin ve aynı API akışı üzerinden sayım kaydını oluşturun.",
+      "snapshotName": "Sayım kaydı adı",
+      "snapshotNamePlaceholder": "örn. Mayıs 2026 Sayımı",
+      "snapshotImage": "Sayım görseli",
+      "filePondLabel": "Bir görsel bırakın veya <span class=\"filepond--label-action\">göz atın</span>",
+      "addedItems": {
+        "title": "Eklenen öğeler",
+        "description": "Bu satırlar, sayım kaydı oluşturulduktan sonra /snapshots/items adresine POST edilecektir.",
+        "emptyTitle": "Eklenen öğe yok",
+        "emptyDescription": "Aşağıdaki listeden ürün miktarları ekleyin."
+      },
+      "addProducts": {
+        "title": "Ürün ekle",
+        "description": "Manuel sayım kaydı için envanter satırları ve miktarları seçin.",
+        "emptyNoProductsTitle": "Kullanılabilir ürün yok",
+        "emptyNoProductsDescription": "Önce ürün oluşturun, ardından sayım kaydı hazırlamak için buraya dönün.",
+        "emptyAllAddedTitle": "Tüm ürünler eklendi",
+        "emptyAllAddedDescription": "Tekrar eklemek için yukarıdaki bir satırı kaldırın.",
+        "qtyPlaceholder": "Miktar"
+      }
+    },
+    "list": {
+      "error": "Sayım kayıtları API'den yüklenemedi.",
+      "title": "Sayım geçmişi",
+      "description": "Görsel önizlemeleri, ürün satırları ve güven durumuna hazır rozetlerle kayıtlı envanter çalışmaları.",
+      "searchPlaceholder": "Sayım kayıtlarında ara...",
+      "loadingTitle": "Sayım kayıtları yükleniyor",
+      "loadingDescription": "GET /snapshots çağrılıyor ve kayıtlı envanter çalışmaları bekleniyor.",
+      "emptyTitle": "Sayım kaydı bulunamadı",
+      "emptyDescription": "Görsel destekli çalışmaları burada görmek için bir sayım kaydı oluşturun veya arama filtresini temizleyin.",
+      "noRowsTitle": "Ürün satırı yok",
+      "noRowsDescription": "Bu sayım kaydı var, ancak hiçbir ürün eklenmemiş."
+    }
+  },
+  "productionPlan": {
+    "badge": "Planlayıcı",
+    "title": "Üretim Planı",
+    "description": "Envanter odaklı üretim çizelgelemesi için planlama çalışma alanı.",
+    "metrics": {
+      "lines": {
+        "label": "Hatlar",
+        "value": "3",
+        "description": "Aktif planlama hatları"
+      },
+      "plannedUnits": {
+        "label": "Planlanan Birimler",
+        "value": "860",
+        "description": "Yer tutucu haftalık hedef"
+      },
+      "window": {
+        "label": "Pencere",
+        "value": "7g",
+        "description": "Kayan planlama görünümü"
+      }
+    },
+    "board": {
+      "title": "Planlama panosu",
+      "description": "Planlayıcı/yönetici erişimi için başlangıç ekranı."
+    },
+    "rows": {
+      "lineA": {
+        "line": "Hat A",
+        "sku": "SKU-1001",
+        "target": "420 adet",
+        "status": "Hazır"
+      },
+      "lineB": {
+        "line": "Hat B",
+        "sku": "SKU-1002",
+        "target": "180 adet",
+        "status": "İnceleme"
+      },
+      "lineC": {
+        "line": "Hat C",
+        "sku": "SKU-1003",
+        "target": "260 adet",
+        "status": "Sırada"
+      }
+    }
+  },
+  "kitchen": {
+    "badge": "Tasarım sözleşmesi",
+    "title": "Mutfak",
+    "description": "Açık yeşil operasyon konsolu için ortak UI bileşenleri. Gelecekteki frontend işleri yeni şekiller icat etmeden önce bu yapıları yeniden kullanmalıdır.",
+    "palette": {
+      "title": "Palet",
+      "description": "Depo iş akışları için Compass'tan ilham alan beyaz ve yeşil tasarım tokenları.",
+      "swatches": {
+        "background": "Arka Plan",
+        "surface": "Yüzey",
+        "surfaceMuted": "Soluk Yüzey",
+        "border": "Kenarlık",
+        "textPrimary": "Birincil Metin",
+        "textMuted": "Soluk Metin",
+        "primaryGreen": "Birincil Yeşil",
+        "primaryHover": "Birincil Hover",
+        "softGreen": "Yumuşak Yeşil",
+        "brightAccent": "Parlak Vurgu",
+        "warning": "Uyarı",
+        "danger": "Tehlike",
+        "info": "Bilgi"
+      }
+    },
+    "typography": {
+      "title": "Tipografi",
+      "description": "Yoğun, okunabilir ve en iyi anlamıyla sade.",
+      "h1": "H1 Başlık",
+      "h1Spec": "36px / 300 / #10231B",
+      "h2": "H2 Başlık",
+      "h2Spec": "24px / 400 / #10231B",
+      "body": "Gövde metni, tekrar tekrar taramaya uygun kontrastla kompakt ve net kalır."
+    },
+    "buttons": {
+      "title": "Butonlar",
+      "description": "Normal aksiyonlar için birincil yeşil, kırmızı yalnızca yıkıcı veya acil aksiyonlar için.",
+      "primary": "Birincil",
+      "secondary": "İkincil",
+      "soft": "Yumuşak",
+      "ghost": "Şeffaf",
+      "warning": "Uyarı",
+      "emergency": "Acil"
+    },
+    "forms": {
+      "title": "Formlar",
+      "description": "Yuvarlatılmış kontroller, yumuşak odak halkaları, net etiketler.",
+      "search": "Ara",
+      "searchPlaceholder": "SKU, ürün ara...",
+      "quantity": "Miktar",
+      "quantityPlaceholder": "120",
+      "binaryControls": "İkili kontroller",
+      "autoRefresh": "Otomatik yenileme",
+      "healthChecks": "Durum kontrolleri"
+    },
+    "badges": {
+      "title": "Rozetler",
+      "description": "Küçük, kolay taranabilir durum işaretleri.",
+      "healthy": "Sağlıklı",
+      "incoming": "Gelen",
+      "lowConfidence": "Düşük güven",
+      "blocked": "Engellendi",
+      "pending": "Beklemede",
+      "planner": "Planlayıcı"
+    },
+    "statusCards": {
+      "title": "Durum kartları",
+      "description": "Kompakt operasyonel metrikler.",
+      "totalSkus": "Toplam SKU",
+      "totalSkusValue": "4.782",
+      "warehouses": "Depolar",
+      "warehousesValue": "12",
+      "lowStock": "Düşük Stok",
+      "lowStockValue": "128",
+      "db": "DB",
+      "dbValue": "Bağlı"
+    },
+    "table": {
+      "title": "Tablo",
+      "description": "Envanter, rapor ve planlama sayfaları için varsayılan yapı.",
+      "headings": {
+        "sku": "SKU",
+        "product": "Ürün",
+        "location": "Konum",
+        "status": "Durum",
+        "confidence": "Güven",
+        "actions": "İşlemler"
+      },
+      "rows": {
+        "mouse": {
+          "sku": "SKU-1001",
+          "product": "Kablosuz Mouse",
+          "location": "WH-01 / Koridor 3 / Raf A",
+          "status": "Stokta",
+          "confidence": "%94"
+        },
+        "keyboard": {
+          "sku": "SKU-1002",
+          "product": "Mekanik Klavye",
+          "location": "WH-01 / Koridor 1 / Raf C",
+          "status": "Düşük Stok",
+          "confidence": "%78"
+        },
+        "monitor": {
+          "sku": "SKU-1003",
+          "product": "24 inç Monitör",
+          "location": "WH-02 / Koridor 5 / Raf B",
+          "status": "Stokta Yok",
+          "confidence": "beklemede"
+        }
+      }
+    },
+    "feedback": {
+      "title": "Geri Bildirim",
+      "description": "Toast benzeri mesajlar ve uyarılar.",
+      "snapshotSaved": {
+        "title": "Sayım kaydı kaydedildi",
+        "body": "18 satır başarıyla yazıldı."
+      },
+      "lowConfidence": {
+        "title": "Düşük güven",
+        "body": "3 tespit incelenmelidir."
+      },
+      "uploadFailed": {
+        "title": "Yükleme başarısız",
+        "body": "API bir hata döndürdü."
+      }
+    }
+  }
+}
