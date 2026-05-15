@@ -12,6 +12,7 @@ from db.session import engine
 from routers.auth import router as auth_router
 from routers.products import router as products_router
 from routers.files import router as files_router
+from routers.reports import router as reports_router
 from routers.snapshots import router as snapshots_router
 
 
@@ -48,6 +49,7 @@ app.include_router(auth_router)
 app.include_router(products_router)
 app.include_router(files_router)
 app.include_router(snapshots_router)
+app.include_router(reports_router)
 
 uploads_dir = Path(__file__).resolve().parent / "storage" / "uploads"
 uploads_dir.mkdir(parents=True, exist_ok=True)
