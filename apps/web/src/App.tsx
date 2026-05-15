@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 
 import DashboardPage from "@/components/DashboardPage";
@@ -13,12 +14,14 @@ import { useAuthStore } from "@/stores/auth-store";
 import { Boxes } from "lucide-react";
 
 function AuthLoading() {
+  const { t } = useTranslation();
+
   return (
     <div className="grid min-h-screen place-items-center bg-[#F7FAF8] px-4">
       <EmptyState
         icon={Boxes}
-        title="Loading workspace"
-        description="Checking your saved session before opening the console."
+        title={t("app.loading.title")}
+        description={t("app.loading.description")}
         className="max-w-md border border-[#D9E4DD] bg-white"
       />
     </div>

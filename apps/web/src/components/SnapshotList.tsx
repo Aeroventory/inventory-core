@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CalendarDays, ImageIcon, RefreshCw, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ interface SnapshotListProps {
 }
 
 export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
+  const { i18n, t } = useTranslation();
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
     setError(null);
     getSnapshots()
       .then((res) => setSnapshots(res.data))
-      .catch(() => setError("Failed to load snapshots from the API."))
+      .catch(() => setError(t("snapshots.list.error")))
       .finally(() => setLoading(false));
   };
 
@@ -63,14 +65,14 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
     <Card>
       <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <CardTitle>Snapshot history</CardTitle>
-          <CardDescription>Saved inventory runs with image previews, item rows, and confidence-ready badges.</CardDescription>
+          <CardTitle>{t("snapshots.list.title")}</CardTitle>
+          <CardDescription>{t("snapshots.list.description")}</CardDescription>
         </div>
         <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto">
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} leftSlot={<Search size={16} />} placeholder="Search snapshots..." />
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} leftSlot={<Search size={16} />} placeholder={t("snapshots.list.searchPlaceholder")} />
           <Button variant="secondary" onClick={fetchSnapshots} disabled={loading}>
             <RefreshCw size={16} />
-            Refresh
+            {t("common.actions.refresh")}
           </Button>
         </div>
       </CardHeader>
@@ -82,9 +84,9 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
         )}
 
         {loading ? (
-          <EmptyState icon={ImageIcon} title="Loading snapshots" description="Calling GET /snapshots and waiting for saved inventory runs." />
+          <EmptyState icon={ImageIcon} title={t("snapshots.list.loadingTitle")} description={t("snapshots.list.loadingDescription")} />
         ) : filteredSnapshots.length === 0 ? (
-          <EmptyState icon={ImageIcon} title="No snapshots found" description="Create a snapshot or clear the search filter to see image-backed runs here." />
+          <EmptyState icon={ImageIcon} title={t("snapshots.list.emptyTitle")} description={t("snapshots.list.emptyDescription")} />
         ) : (
           <div className="space-y-4">
             {filteredSnapshots.map((snapshot) => {
@@ -105,23 +107,23 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                           <h3 className="text-lg font-light text-[#10231B]">{snapshot.name}</h3>
                           <p className="mt-1 flex items-center gap-2 text-sm text-[#5B6B63]">
                             <CalendarDays size={15} />
-                            {new Date(snapshot.created_at).toLocaleString()}
+                            {new Date(snapshot.created_at).toLocaleString(i18n.resolvedLanguage)}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge tone="blue">{snapshot.items.length} rows</Badge>
-                          <Badge tone="green">{totalQuantity} units</Badge>
+                          <Badge tone="blue">{t("common.formats.itemRows", { count: snapshot.items.length })}</Badge>
+                          <Badge tone="green">{t("common.formats.units", { count: totalQuantity })}</Badge>
                         </div>
                       </div>
 
                       {snapshot.items.length === 0 ? (
-                        <EmptyState icon={ImageIcon} title="No item rows" description="This snapshot exists, but no products were attached." className="mt-4 min-h-[120px]" />
+                        <EmptyState icon={ImageIcon} title={t("snapshots.list.noRowsTitle")} description={t("snapshots.list.noRowsDescription")} className="mt-4 min-h-[120px]" />
                       ) : (
                         <div className="mt-4 overflow-x-auto rounded-2xl border border-[#D9E4DD]">
                           <table className="w-full min-w-[640px] border-separate border-spacing-0 text-left text-sm">
                             <thead>
                               <tr className="bg-[#F7FAF8] text-xs font-medium uppercase text-[#5B6B63]">
-                                {["Product", "SKU", "Quantity", "Confidence", "Value"].map((heading) => (
+                                {[t("common.labels.product"), t("common.labels.sku"), t("common.labels.quantity"), t("common.labels.confidence"), t("common.labels.value")].map((heading) => (
                                   <th key={heading} className="border-b border-[#D9E4DD] px-3 py-2">
                                     {heading}
                                   </th>
@@ -132,16 +134,18 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                               {snapshot.items.map((item) => (
                                 <tr key={item.id} className="hover:bg-[#F7FAF8]">
                                   <td className="border-b border-[#D9E4DD] px-3 py-2 font-semibold text-[#10231B]">{item.product.name}</td>
-                                  <td className="border-b border-[#D9E4DD] px-3 py-2 text-[#5B6B63]">{item.product.sku || "pending"}</td>
+                                  <td className="border-b border-[#D9E4DD] px-3 py-2 text-[#5B6B63]">{item.product.sku || t("common.states.pending")}</td>
                                   <td className="border-b border-[#D9E4DD] px-3 py-2">
-                                    <Badge tone="green">x {item.quantity}</Badge>
+                                    <Badge tone="green">{t("common.badges.quantity", { count: item.quantity })}</Badge>
                                   </td>
                                   <td className="border-b border-[#D9E4DD] px-3 py-2">
                                     <Badge tone={confidenceTone(item.confidence_score)}>
-                                      {item.confidence_score == null ? "pending" : `${Math.round(item.confidence_score * 100)}%`}
+                                      {item.confidence_score == null
+                                        ? t("common.states.pending")
+                                        : t("common.badges.confidencePercent", { value: Math.round(item.confidence_score * 100) })}
                                     </Badge>
                                   </td>
-                                  <td className="border-b border-[#D9E4DD] px-3 py-2 font-semibold text-[#00684A]">₺{item.product.value}</td>
+                                  <td className="border-b border-[#D9E4DD] px-3 py-2 font-semibold text-[#00684A]">{t("common.formats.currencyTry", { value: item.product.value })}</td>
                                 </tr>
                               ))}
                             </tbody>

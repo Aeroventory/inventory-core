@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
   Boxes,
   ChefHat,
+  ChevronDown,
   ClipboardList,
   Database,
+  Globe,
   Home,
   LogOut,
   Menu,
@@ -46,6 +49,7 @@ function isCurrentPath(pathname: string, itemPath: string) {
 }
 
 export default function ProtectedLayout() {
+  const { i18n, t } = useTranslation();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -83,6 +87,23 @@ export default function ProtectedLayout() {
     navigate("/login", { replace: true });
   };
 
+  const translateState = (state: string | undefined, fallback = "unknown") => {
+    const value = state ?? fallback;
+    return t(`common.states.${value}`, { defaultValue: value });
+  };
+
+  const translateRole = (role: UserRole | undefined) => {
+    const value = role ?? "viewer";
+    return t(`common.roles.${value}`, { defaultValue: value });
+  };
+
+  const userRoleLabel = translateRole(user?.role);
+  const currentLanguage = i18n.resolvedLanguage?.startsWith("tr") ? "tr" : "en";
+
+  const handleLanguageChange = (language: string) => {
+    void i18n.changeLanguage(language);
+  };
+
   const sidebar = (
     <aside className="flex h-full flex-col border-r border-[#D9E4DD] bg-white/95 backdrop-blur">
       <div className="flex h-20 items-center gap-3 px-6">
@@ -90,8 +111,8 @@ export default function ProtectedLayout() {
           <Boxes size={23} />
         </div>
         <div>
-          <p className="text-xl font-medium text-[#10231B]">Aeroventory</p>
-          <p className="text-xs font-semibold text-[#5B6B63]">Inventory Core Console</p>
+          <p className="text-xl font-medium text-[#10231B]">{t("common.brand.name")}</p>
+          <p className="text-xs font-semibold text-[#5B6B63]">{t("common.brand.consoleName")}</p>
         </div>
       </div>
 
@@ -115,9 +136,9 @@ export default function ProtectedLayout() {
                 <>
                   <Icon size={18} />
                   <span className="min-w-0">
-                    <span className="block truncate">{item.label}</span>
+                    <span className="block truncate">{t(item.labelKey)}</span>
                     <span className={cn("block truncate text-xs font-medium", isActive ? "text-[#00684A]/75" : "text-[#5B6B63]")}>
-                      {item.description}
+                      {t(item.descriptionKey)}
                     </span>
                   </span>
                 </>
@@ -130,10 +151,10 @@ export default function ProtectedLayout() {
       <div className="m-4 rounded-2xl border border-[#D9E4DD] bg-[#F7FAF8] p-4">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-[#00ED64]" />
-          <p className="text-sm font-medium text-[#10231B]">{user?.username ?? "Signed in"}</p>
+          <p className="text-sm font-medium text-[#10231B]">{user?.username ?? t("layout.signedIn")}</p>
         </div>
         <p className="mt-1 text-xs leading-5 text-[#5B6B63]">
-          {user?.role ?? "viewer"} access for inventory workflows.
+          {t("layout.accessDescription", { role: userRoleLabel })}
         </p>
       </div>
     </aside>
@@ -146,7 +167,7 @@ export default function ProtectedLayout() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 xl:hidden">
           <button
-            aria-label="Close navigation overlay"
+            aria-label={t("common.aria.closeNavigationOverlay")}
             className="absolute inset-0 bg-[#10231B]/30"
             onClick={() => setMobileOpen(false)}
           />
@@ -156,50 +177,69 @@ export default function ProtectedLayout() {
 
       <header className="sticky top-0 z-20 border-b border-[#D9E4DD] bg-white/90 backdrop-blur xl:ml-[19rem]">
         <div className="flex h-20 items-center gap-4 px-4 sm:px-6 lg:px-8">
-          <Button variant="secondary" size="icon" className="xl:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
+          <Button variant="secondary" size="icon" className="xl:hidden" onClick={() => setMobileOpen(true)} aria-label={t("common.aria.openNavigation")}>
             <Menu size={19} />
           </Button>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#5B6B63]">
-              <span>Console</span>
+              <span>{t("common.brand.console")}</span>
               <span>/</span>
-              <span className="text-[#10231B]">{activeItem.label}</span>
+              <span className="text-[#10231B]">{t(activeItem.labelKey)}</span>
             </div>
-            <p className="truncate text-lg font-light text-[#10231B]">{activeItem.description}</p>
+            <p className="truncate text-lg font-light text-[#10231B]">{t(activeItem.descriptionKey)}</p>
           </div>
 
           <div className="hidden items-center gap-2 md:flex">
             <Badge tone={health?.status === "healthy" ? "green" : "warning"}>
               <Activity size={13} />
-              {health?.status ?? "checking"}
+              {translateState(health?.status, "checking")}
             </Badge>
             <Badge tone={health?.database === "connected" ? "green" : "danger"}>
               <Database size={13} />
-              DB {health?.database ?? "unknown"}
+              {t("common.badges.dbStatus", { status: translateState(health?.database) })}
             </Badge>
           </div>
 
-          <Button variant="secondary" size="icon" onClick={fetchHealth} disabled={healthLoading} aria-label="Refresh API health">
+          <label className="relative flex h-10 items-center rounded-xl border border-[#D9E4DD] bg-white text-sm font-semibold text-[#10231B] shadow-sm">
+            <span className="pointer-events-none absolute left-3 text-[#00684A]">
+              <Globe size={17} />
+            </span>
+            <span className="sr-only">{t("common.language.label")}</span>
+            <select
+              aria-label={t("common.language.label")}
+              className="h-full appearance-none rounded-xl bg-transparent py-0 pl-9 pr-8 outline-none transition focus-visible:ring-4 focus-visible:ring-[rgba(0,104,74,0.12)]"
+              value={currentLanguage}
+              onChange={(event) => handleLanguageChange(event.target.value)}
+            >
+              <option value="en">{t("common.language.english")}</option>
+              <option value="tr">{t("common.language.turkish")}</option>
+            </select>
+            <span className="pointer-events-none absolute right-3 text-[#5B6B63]">
+              <ChevronDown size={14} />
+            </span>
+          </label>
+
+          <Button variant="secondary" size="icon" onClick={fetchHealth} disabled={healthLoading} aria-label={t("common.aria.refreshApiHealth")}>
             {healthLoading ? <RefreshCw size={17} className="animate-spin" /> : <RefreshCw size={17} />}
           </Button>
 
           <div className="hidden items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white px-3 py-2 sm:flex">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-[#E3F6EC] text-sm font-medium uppercase text-[#00684A]">
-              {user?.username.slice(0, 2) ?? "US"}
+              {user?.username.slice(0, 2) ?? t("layout.fallbackInitials")}
             </div>
             <div className="hidden lg:block">
               <p className="text-sm font-bold text-[#10231B]">{user?.username}</p>
-              <p className="text-xs capitalize text-[#5B6B63]">{user?.role}</p>
+              <p className="text-xs capitalize text-[#5B6B63]">{userRoleLabel}</p>
             </div>
           </div>
 
-          <Button variant="secondary" size="icon" onClick={handleLogout} aria-label="Log out">
+          <Button variant="secondary" size="icon" onClick={handleLogout} aria-label={t("common.aria.logOut")}>
             <LogOut size={17} />
           </Button>
 
           {mobileOpen && (
-            <Button variant="secondary" size="icon" className="xl:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+            <Button variant="secondary" size="icon" className="xl:hidden" onClick={() => setMobileOpen(false)} aria-label={t("common.aria.closeNavigation")}>
               <X size={18} />
             </Button>
           )}

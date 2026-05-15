@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CheckCircle2, ImagePlus, PackagePlus, Save, Trash2, UploadCloud } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ interface SnapshotFormProps {
 }
 
 export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
@@ -42,7 +44,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
   const loadProducts = () => {
     getProducts()
       .then((res) => setProducts(res.data))
-      .catch(() => setError("Failed to load products."));
+      .catch(() => setError(t("snapshots.form.errors.loadProducts")));
   };
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
       const saveRes = await saveFile(tempName, "snapshots");
       setFilePath(saveRes.data.file_path);
     } catch {
-      setError("Failed to upload and save the image.");
+      setError(t("snapshots.form.errors.uploadImage"));
     } finally {
       setUploading(false);
     }
@@ -101,15 +103,15 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("Snapshot name is required.");
+      setError(t("snapshots.form.errors.snapshotNameRequired"));
       return;
     }
     if (!filePath) {
-      setError("Upload an image before saving the snapshot.");
+      setError(t("snapshots.form.errors.uploadBeforeSave"));
       return;
     }
     if (pendingItems.length === 0) {
-      setError("Add at least one product row to the snapshot.");
+      setError(t("snapshots.form.errors.addAtLeastOneProduct"));
       return;
     }
 
@@ -132,7 +134,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
         });
       }
 
-      setSuccess(`Snapshot "${name.trim()}" saved with ${pendingItems.length} item rows.`);
+      setSuccess(t("snapshots.form.success", { name: name.trim(), count: pendingItems.length }));
       setName("");
       setFilePath(null);
       setTempFilename(null);
@@ -140,7 +142,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
       setQuantities({});
       onSaved?.();
     } catch {
-      setError("Failed to save snapshot.");
+      setError(t("snapshots.form.errors.save"));
     } finally {
       setSaving(false);
     }
@@ -151,12 +153,17 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
       <CardHeader>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle>New snapshot</CardTitle>
-            <CardDescription>Upload an image, pick products, and save a snapshot through the same API flow.</CardDescription>
+            <CardTitle>{t("snapshots.form.title")}</CardTitle>
+            <CardDescription>{t("snapshots.form.description")}</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge tone={filePath ? "green" : "neutral"}>{filePath ? "image saved" : "image pending"}</Badge>
-            <Badge tone={pendingItems.length ? "blue" : "neutral"}>{pendingItems.length} rows · {totalQuantity} units</Badge>
+            <Badge tone={filePath ? "green" : "neutral"}>{filePath ? t("common.badges.imageSaved") : t("common.badges.imagePending")}</Badge>
+            <Badge tone={pendingItems.length ? "blue" : "neutral"}>
+              {t("common.formats.compactPair", {
+                first: t("common.formats.itemRows", { count: pendingItems.length }),
+                second: t("common.formats.units", { count: totalQuantity }),
+              })}
+            </Badge>
           </div>
         </div>
       </CardHeader>
@@ -176,16 +183,16 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
         <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">Snapshot name</span>
-              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. May 2026 Count" />
+              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotName")}</span>
+              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("snapshots.form.snapshotNamePlaceholder")} />
             </label>
 
             <div>
-              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">Snapshot image</span>
+              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotImage")}</span>
               <FilePond
                 allowMultiple={false}
                 acceptedFileTypes={["image/*"]}
-                labelIdle='Drop an image or <span class="filepond--label-action">browse</span>'
+                labelIdle={t("snapshots.form.filePondLabel")}
                 onaddfile={(_error, fileItem) => {
                   if (fileItem?.file) {
                     handleFileUpload(fileItem.file as File);
@@ -197,9 +204,9 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
                 }}
               />
               <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                {uploading && <Badge tone="blue">uploading</Badge>}
-                {tempFilename && <Badge tone="neutral">temp: {tempFilename}</Badge>}
-                {filePath && <Badge tone="green">saved: {filePath}</Badge>}
+                {uploading && <Badge tone="blue">{t("common.badges.uploading")}</Badge>}
+                {tempFilename && <Badge tone="neutral">{t("common.badges.tempFile", { filename: tempFilename })}</Badge>}
+                {filePath && <Badge tone="green">{t("common.badges.savedFile", { path: filePath })}</Badge>}
               </div>
             </div>
           </div>
@@ -207,20 +214,20 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
           <div className="rounded-2xl border border-[#D9E4DD] bg-[#F7FAF8] p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <p className="font-medium text-[#10231B]">Added items</p>
-                <p className="text-sm text-[#5B6B63]">These rows will be POSTed to /snapshots/items after the snapshot is created.</p>
+                <p className="font-medium text-[#10231B]">{t("snapshots.form.addedItems.title")}</p>
+                <p className="text-sm text-[#5B6B63]">{t("snapshots.form.addedItems.description")}</p>
               </div>
               <PackagePlus size={20} className="text-[#00684A]" />
             </div>
             {pendingItems.length === 0 ? (
-              <EmptyState icon={ImagePlus} title="No items added" description="Add product quantities from the list below." className="min-h-[150px] bg-white" />
+              <EmptyState icon={ImagePlus} title={t("snapshots.form.addedItems.emptyTitle")} description={t("snapshots.form.addedItems.emptyDescription")} className="min-h-[150px] bg-white" />
             ) : (
               <div className="space-y-2">
                 {pendingItems.map((item) => (
                   <div key={item.product.id} className="flex items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-[#10231B]">{item.product.name}</p>
-                      <p className="text-xs text-[#5B6B63]">{item.product.sku || `Product #${item.product.id}`}</p>
+                      <p className="text-xs text-[#5B6B63]">{item.product.sku || t("common.formats.productId", { id: item.product.id })}</p>
                     </div>
                     <Input
                       type="number"
@@ -229,7 +236,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
                       onChange={(event) => updatePendingQuantity(item.product.id, Number(event.target.value))}
                       className="w-20 text-center"
                     />
-                    <Button size="icon" variant="secondary" aria-label="Remove item" onClick={() => removePendingItem(item.product.id)}>
+                    <Button size="icon" variant="secondary" aria-label={t("common.aria.removeItem")} onClick={() => removePendingItem(item.product.id)}>
                       <Trash2 size={15} />
                     </Button>
                   </div>
@@ -242,19 +249,19 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="font-medium text-[#10231B]">Add products</p>
-              <p className="text-sm text-[#5B6B63]">Pick inventory rows and quantities for a manual snapshot.</p>
+              <p className="font-medium text-[#10231B]">{t("snapshots.form.addProducts.title")}</p>
+              <p className="text-sm text-[#5B6B63]">{t("snapshots.form.addProducts.description")}</p>
             </div>
             <Button variant="secondary" size="sm" onClick={loadProducts}>
-              Refresh products
+              {t("common.actions.refreshProducts")}
             </Button>
           </div>
 
           {availableProducts.length === 0 ? (
             <EmptyState
               icon={PackagePlus}
-              title={products.length === 0 ? "No products available" : "All products added"}
-              description={products.length === 0 ? "Create products first, then return here to build a snapshot." : "Remove a row above to add it again."}
+              title={products.length === 0 ? t("snapshots.form.addProducts.emptyNoProductsTitle") : t("snapshots.form.addProducts.emptyAllAddedTitle")}
+              description={products.length === 0 ? t("snapshots.form.addProducts.emptyNoProductsDescription") : t("snapshots.form.addProducts.emptyAllAddedDescription")}
             />
           ) : (
             <div className="grid gap-3 lg:grid-cols-2">
@@ -262,18 +269,23 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
                 <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-[#10231B]">{product.name}</p>
-                    <p className="text-xs text-[#5B6B63]">{product.sku || `Product #${product.id}`} · ₺{product.value}</p>
+                    <p className="text-xs text-[#5B6B63]">
+                      {t("common.formats.compactPair", {
+                        first: product.sku || t("common.formats.productId", { id: product.id }),
+                        second: t("common.formats.currencyTry", { value: product.value }),
+                      })}
+                    </p>
                   </div>
                   <Input
                     type="number"
                     min="1"
                     value={quantities[product.id] || ""}
                     onChange={(event) => setQuantities({ ...quantities, [product.id]: event.target.value })}
-                    placeholder="Qty"
+                    placeholder={t("snapshots.form.addProducts.qtyPlaceholder")}
                     className="w-24"
                   />
                   <Button variant="soft" size="sm" onClick={() => handleAddItem(product)}>
-                    Add
+                    {t("common.actions.add")}
                   </Button>
                 </div>
               ))}
@@ -283,7 +295,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
 
         <Button size="lg" className="w-full" disabled={saving || uploading} onClick={handleSave}>
           {saving ? <UploadCloud size={18} className="animate-pulse" /> : <Save size={18} />}
-          {saving ? "Saving snapshot..." : "Save Snapshot"}
+          {saving ? t("common.actions.savingSnapshot") : t("common.actions.saveSnapshot")}
         </Button>
       </CardContent>
     </Card>

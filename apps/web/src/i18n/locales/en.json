@@ -1,0 +1,445 @@
+{
+  "common": {
+    "brand": {
+      "name": "Aeroventory",
+      "consoleName": "Inventory Core Console",
+      "console": "Console"
+    },
+    "actions": {
+      "add": "Add",
+      "cancel": "Cancel",
+      "checkApi": "Check API",
+      "delete": "Delete",
+      "edit": "Edit",
+      "newSnapshot": "New Snapshot",
+      "refresh": "Refresh",
+      "refreshProducts": "Refresh products",
+      "save": "Save",
+      "saveSnapshot": "Save Snapshot",
+      "savingSnapshot": "Saving snapshot...",
+      "signIn": "Sign in",
+      "signingIn": "Signing in...",
+      "viewSnapshots": "View snapshots"
+    },
+    "aria": {
+      "closeNavigation": "Close navigation",
+      "closeNavigationOverlay": "Close navigation overlay",
+      "deleteProduct": "Delete product",
+      "editProduct": "Edit product",
+      "logOut": "Log out",
+      "openNavigation": "Open navigation",
+      "refreshApiHealth": "Refresh API health",
+      "removeItem": "Remove item"
+    },
+    "badges": {
+      "apiStatus": "API {{status}}",
+      "apiUnchecked": "API unchecked",
+      "confidencePending": "confidence pending",
+      "confidencePercent": "{{value}}%",
+      "dbStatus": "DB {{status}}",
+      "filePath": "/{{path}}",
+      "imagePending": "image pending",
+      "imageSaved": "image saved",
+      "qrStatus": "QR {{status}}",
+      "quantity": "x {{count}}",
+      "savedFile": "saved: {{path}}",
+      "skuStatus": "SKU {{status}}",
+      "tempFile": "temp: {{filename}}",
+      "uploading": "uploading"
+    },
+    "formats": {
+      "currencyTry": "₺{{value}}",
+      "compactPair": "{{first}} · {{second}}",
+      "itemRows_one": "{{count}} item row",
+      "itemRows_other": "{{count}} item rows",
+      "productId": "Product #{{id}}",
+      "trackedProductValue": "Tracked product value total: {{value}}",
+      "units_one": "{{count}} unit",
+      "units_other": "{{count}} units",
+      "visibleProducts_one": "{{count}} visible product from /products",
+      "visibleProducts_other": "{{count}} visible products from /products"
+    },
+    "labels": {
+      "actions": "Actions",
+      "aisle": "Aisle",
+      "confidence": "Confidence",
+      "line": "Line",
+      "location": "Location",
+      "product": "Product",
+      "quantity": "Quantity",
+      "rack": "Rack",
+      "schemaFields": "Schema Fields",
+      "site": "Site",
+      "sku": "SKU",
+      "status": "Status",
+      "target": "Target",
+      "value": "Value"
+    },
+    "roles": {
+      "admin": "admin",
+      "planner": "planner",
+      "viewer": "viewer"
+    },
+    "states": {
+      "checking": "checking",
+      "connected": "connected",
+      "degraded": "degraded",
+      "disconnected": "disconnected",
+      "healthy": "healthy",
+      "missing": "missing",
+      "pending": "pending",
+      "ready": "ready",
+      "set": "set",
+      "unknown": "unknown"
+    },
+    "language": {
+      "label": "Language",
+      "english": "English",
+      "turkish": "Turkish"
+    }
+  },
+  "app": {
+    "loading": {
+      "title": "Loading workspace",
+      "description": "Checking your saved session before opening the console."
+    }
+  },
+  "nav": {
+    "dashboard": {
+      "label": "Dashboard",
+      "description": "Health and workflow overview"
+    },
+    "products": {
+      "label": "Products",
+      "description": "Inventory product catalog"
+    },
+    "snapshots": {
+      "label": "Snapshots",
+      "description": "Image and inventory snapshots"
+    },
+    "productionPlan": {
+      "label": "Production Plan",
+      "description": "Planner workspace"
+    },
+    "kitchen": {
+      "label": "Kitchen",
+      "description": "Design system contract"
+    }
+  },
+  "layout": {
+    "signedIn": "Signed in",
+    "defaultRole": "viewer",
+    "accessDescription": "{{role}} access for inventory workflows.",
+    "fallbackInitials": "US"
+  },
+  "auth": {
+    "title": "Sign in",
+    "description": "Use your inventory account to open the workspace.",
+    "username": "Username",
+    "password": "Password",
+    "error": "Username or password is incorrect."
+  },
+  "dashboard": {
+    "errors": {
+      "loadData": "Could not load dashboard data from the API."
+    },
+    "hero": {
+      "title": "Inventory workflow console",
+      "description": "A light, endpoint-first workspace for testing products, snapshots, uploads, and API health without opening Postman."
+    },
+    "metrics": {
+      "products": {
+        "label": "Products",
+        "description": "Rows returned from /products"
+      },
+      "latestUnits": {
+        "label": "Latest Units",
+        "description": "Quantity total in the newest snapshot"
+      },
+      "snapshots": {
+        "label": "Snapshots",
+        "description": "Saved image-backed inventory runs"
+      },
+      "dbStatus": {
+        "label": "DB Status"
+      },
+      "loadingValue": "..."
+    },
+    "shortcuts": {
+      "createOrEditProducts": "Create or edit products",
+      "browseProducts": "Browse products",
+      "uploadImageAndSaveSnapshot": "Upload image and save snapshot",
+      "reviewSnapshots": "Review snapshots",
+      "openProductionPlan": "Open production plan",
+      "openKitchen": "Open the kitchen design contract",
+      "title": "Workflow shortcuts",
+      "description": "Move through the testing loop without leaving the console."
+    },
+    "latestSnapshot": {
+      "title": "Latest snapshot",
+      "description": "Fast check that the image workflow is producing useful inventory rows.",
+      "noSnapshotsTitle": "No snapshots yet",
+      "noSnapshotsDescription": "Upload an image and save a snapshot to see the latest detected inventory here."
+    }
+  },
+  "products": {
+    "badge": "Products API",
+    "title": "Products",
+    "description": "Table-first CRUD tester for inventory products with required SKU and warehouse location fields.",
+    "errors": {
+      "load": "Failed to load products from the API.",
+      "nameRequired": "Product name is required.",
+      "skuRequired": "SKU is required.",
+      "invalidValue": "Value must be a valid number.",
+      "create": "Failed to create product.",
+      "update": "Failed to update product.",
+      "delete": "Failed to delete product."
+    },
+    "create": {
+      "title": "Create product",
+      "description": "Create inventory rows with the backend product schema, including required SKU and optional location fields.",
+      "placeholders": {
+        "name": "Product name",
+        "sku": "SKU",
+        "value": "Value",
+        "site": "Site",
+        "aisle": "Aisle",
+        "rack": "Rack"
+      }
+    },
+    "table": {
+      "title": "Product table",
+      "searchPlaceholder": "Search name, SKU, location...",
+      "loadingTitle": "Loading products",
+      "loadingDescription": "Calling GET /products and waiting for the API response.",
+      "emptyTitle": "No products found",
+      "emptyDescription": "Create a product or clear the search filter to see rows here.",
+      "locationPending": "Location pending"
+    }
+  },
+  "snapshots": {
+    "page": {
+      "badge": "Snapshots API",
+      "title": "Snapshots",
+      "description": "Upload images, create manual snapshot rows, and inspect the saved inventory history in one workflow."
+    },
+    "form": {
+      "errors": {
+        "loadProducts": "Failed to load products.",
+        "uploadImage": "Failed to upload and save the image.",
+        "snapshotNameRequired": "Snapshot name is required.",
+        "uploadBeforeSave": "Upload an image before saving the snapshot.",
+        "addAtLeastOneProduct": "Add at least one product row to the snapshot.",
+        "save": "Failed to save snapshot."
+      },
+      "success_one": "Snapshot \"{{name}}\" saved with {{count}} item row.",
+      "success_other": "Snapshot \"{{name}}\" saved with {{count}} item rows.",
+      "title": "New snapshot",
+      "description": "Upload an image, pick products, and save a snapshot through the same API flow.",
+      "snapshotName": "Snapshot name",
+      "snapshotNamePlaceholder": "e.g. May 2026 Count",
+      "snapshotImage": "Snapshot image",
+      "filePondLabel": "Drop an image or <span class=\"filepond--label-action\">browse</span>",
+      "addedItems": {
+        "title": "Added items",
+        "description": "These rows will be POSTed to /snapshots/items after the snapshot is created.",
+        "emptyTitle": "No items added",
+        "emptyDescription": "Add product quantities from the list below."
+      },
+      "addProducts": {
+        "title": "Add products",
+        "description": "Pick inventory rows and quantities for a manual snapshot.",
+        "emptyNoProductsTitle": "No products available",
+        "emptyNoProductsDescription": "Create products first, then return here to build a snapshot.",
+        "emptyAllAddedTitle": "All products added",
+        "emptyAllAddedDescription": "Remove a row above to add it again.",
+        "qtyPlaceholder": "Qty"
+      }
+    },
+    "list": {
+      "error": "Failed to load snapshots from the API.",
+      "title": "Snapshot history",
+      "description": "Saved inventory runs with image previews, item rows, and confidence-ready badges.",
+      "searchPlaceholder": "Search snapshots...",
+      "loadingTitle": "Loading snapshots",
+      "loadingDescription": "Calling GET /snapshots and waiting for saved inventory runs.",
+      "emptyTitle": "No snapshots found",
+      "emptyDescription": "Create a snapshot or clear the search filter to see image-backed runs here.",
+      "noRowsTitle": "No item rows",
+      "noRowsDescription": "This snapshot exists, but no products were attached."
+    }
+  },
+  "productionPlan": {
+    "badge": "Planner",
+    "title": "Production Plan",
+    "description": "A planner workspace for inventory-driven production scheduling.",
+    "metrics": {
+      "lines": {
+        "label": "Lines",
+        "value": "3",
+        "description": "Active planning lanes"
+      },
+      "plannedUnits": {
+        "label": "Planned Units",
+        "value": "860",
+        "description": "Placeholder weekly target"
+      },
+      "window": {
+        "label": "Window",
+        "value": "7d",
+        "description": "Rolling planning view"
+      }
+    },
+    "board": {
+      "title": "Planning board",
+      "description": "Initial route shell for planner/admin access."
+    },
+    "rows": {
+      "lineA": {
+        "line": "Line A",
+        "sku": "SKU-1001",
+        "target": "420 units",
+        "status": "Ready"
+      },
+      "lineB": {
+        "line": "Line B",
+        "sku": "SKU-1002",
+        "target": "180 units",
+        "status": "Review"
+      },
+      "lineC": {
+        "line": "Line C",
+        "sku": "SKU-1003",
+        "target": "260 units",
+        "status": "Queued"
+      }
+    }
+  },
+  "kitchen": {
+    "badge": "Design contract",
+    "title": "Kitchen",
+    "description": "Shared UI ingredients for the light green operations console. Future frontend issues should reuse these shapes before inventing new ones.",
+    "palette": {
+      "title": "Palette",
+      "description": "Compass-inspired white and green tokens for warehouse workflows.",
+      "swatches": {
+        "background": "Background",
+        "surface": "Surface",
+        "surfaceMuted": "Surface Muted",
+        "border": "Border",
+        "textPrimary": "Text Primary",
+        "textMuted": "Text Muted",
+        "primaryGreen": "Primary Green",
+        "primaryHover": "Primary Hover",
+        "softGreen": "Soft Green",
+        "brightAccent": "Bright Accent",
+        "warning": "Warning",
+        "danger": "Danger",
+        "info": "Info"
+      }
+    },
+    "typography": {
+      "title": "Typography",
+      "description": "Dense, readable, boring in the best way.",
+      "h1": "H1 Heading",
+      "h1Spec": "36px / 300 / #10231B",
+      "h2": "H2 Heading",
+      "h2Spec": "24px / 400 / #10231B",
+      "body": "Body copy stays compact and clear, with enough contrast for repeated scanning."
+    },
+    "buttons": {
+      "title": "Buttons",
+      "description": "Primary green for normal action, red only for destructive or emergency action.",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "soft": "Soft",
+      "ghost": "Ghost",
+      "warning": "Warning",
+      "emergency": "Emergency"
+    },
+    "forms": {
+      "title": "Forms",
+      "description": "Rounded controls, soft focus rings, clear labels.",
+      "search": "Search",
+      "searchPlaceholder": "Search SKUs, products...",
+      "quantity": "Quantity",
+      "quantityPlaceholder": "120",
+      "binaryControls": "Binary controls",
+      "autoRefresh": "Auto refresh",
+      "healthChecks": "Health checks"
+    },
+    "badges": {
+      "title": "Badges",
+      "description": "Small, scannable state markers.",
+      "healthy": "Healthy",
+      "incoming": "Incoming",
+      "lowConfidence": "Low confidence",
+      "blocked": "Blocked",
+      "pending": "Pending",
+      "planner": "Planner"
+    },
+    "statusCards": {
+      "title": "Status cards",
+      "description": "Compact operational metrics.",
+      "totalSkus": "Total SKUs",
+      "totalSkusValue": "4,782",
+      "warehouses": "Warehouses",
+      "warehousesValue": "12",
+      "lowStock": "Low Stock",
+      "lowStockValue": "128",
+      "db": "DB",
+      "dbValue": "Connected"
+    },
+    "table": {
+      "title": "Table",
+      "description": "Default shape for inventory, report, and planning pages.",
+      "headings": {
+        "sku": "SKU",
+        "product": "Product",
+        "location": "Location",
+        "status": "Status",
+        "confidence": "Confidence",
+        "actions": "Actions"
+      },
+      "rows": {
+        "mouse": {
+          "sku": "SKU-1001",
+          "product": "Wireless Mouse",
+          "location": "WH-01 / Aisle 3 / Rack A",
+          "status": "In Stock",
+          "confidence": "94%"
+        },
+        "keyboard": {
+          "sku": "SKU-1002",
+          "product": "Mechanical Keyboard",
+          "location": "WH-01 / Aisle 1 / Rack C",
+          "status": "Low Stock",
+          "confidence": "78%"
+        },
+        "monitor": {
+          "sku": "SKU-1003",
+          "product": "24 inch Monitor",
+          "location": "WH-02 / Aisle 5 / Rack B",
+          "status": "Out of Stock",
+          "confidence": "pending"
+        }
+      }
+    },
+    "feedback": {
+      "title": "Feedback",
+      "description": "Toast-like messages and alerts.",
+      "snapshotSaved": {
+        "title": "Snapshot saved",
+        "body": "18 rows were written successfully."
+      },
+      "lowConfidence": {
+        "title": "Low confidence",
+        "body": "3 detections should be reviewed."
+      },
+      "uploadFailed": {
+        "title": "Upload failed",
+        "body": "The API returned an error."
+      }
+    }
+  }
+}

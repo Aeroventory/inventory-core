@@ -18,21 +18,21 @@ export const palette = {
 } as const;
 
 export const navItems = [
-  { id: "dashboard", label: "Dashboard", path: "/", description: "Health and workflow overview" },
-  { id: "products", label: "Products", path: "/products", description: "Inventory product catalog" },
-  { id: "snapshots", label: "Snapshots", path: "/snapshots", description: "Image and inventory snapshots" },
+  { id: "dashboard", labelKey: "nav.dashboard.label", path: "/", descriptionKey: "nav.dashboard.description" },
+  { id: "products", labelKey: "nav.products.label", path: "/products", descriptionKey: "nav.products.description" },
+  { id: "snapshots", labelKey: "nav.snapshots.label", path: "/snapshots", descriptionKey: "nav.snapshots.description" },
   {
     id: "productionPlan",
-    label: "Production Plan",
+    labelKey: "nav.productionPlan.label",
     path: "/production-plan",
-    description: "Planner workspace",
+    descriptionKey: "nav.productionPlan.description",
     allowedRoles: ["admin", "planner"] satisfies readonly UserRole[],
   },
   {
     id: "kitchen",
-    label: "Kitchen",
+    labelKey: "nav.kitchen.label",
     path: "/kitchen",
-    description: "Design system contract",
+    descriptionKey: "nav.kitchen.description",
     allowedRoles: ["admin"] satisfies readonly UserRole[],
   },
 ] as const;

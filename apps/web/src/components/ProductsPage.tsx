@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Edit3,
   MapPin,
@@ -56,6 +57,7 @@ function cleanDraft(draft: ProductDTO | ProductUpdateDTO) {
 }
 
 export default function ProductsPage() {
+  const { t } = useTranslation();
   const isAdmin = useAuthStore((state) => state.isAdmin());
   const [products, setProducts] = useState<Product[]>([]);
   const [draft, setDraft] = useState<ProductDTO>(emptyDraft);
@@ -71,7 +73,7 @@ export default function ProductsPage() {
     setError(null);
     getProducts()
       .then((res) => setProducts(res.data))
-      .catch(() => setError("Failed to load products from the API."))
+      .catch(() => setError(t("products.errors.load")))
       .finally(() => setLoading(false));
   };
 
@@ -101,15 +103,15 @@ export default function ProductsPage() {
     const cleaned = cleanDraft(draft) as ProductDTO;
     const value = Number(cleaned.value);
     if (!cleaned.name) {
-      setError("Product name is required.");
+      setError(t("products.errors.nameRequired"));
       return;
     }
     if (!cleaned.sku) {
-      setError("SKU is required.");
+      setError(t("products.errors.skuRequired"));
       return;
     }
     if (Number.isNaN(value)) {
-      setError("Value must be a valid number.");
+      setError(t("products.errors.invalidValue"));
       return;
     }
 
@@ -120,7 +122,7 @@ export default function ProductsPage() {
         setDraft(emptyDraft);
         fetchProducts();
       })
-      .catch(() => setError("Failed to create product."))
+      .catch(() => setError(t("products.errors.create")))
       .finally(() => setSaving(false));
   };
 
@@ -137,17 +139,17 @@ export default function ProductsPage() {
   const handleUpdate = (productId: number) => {
     const cleaned = cleanDraft(editDraft) as ProductUpdateDTO;
     if (!cleaned.name) {
-      setError("Product name is required.");
+      setError(t("products.errors.nameRequired"));
       return;
     }
     if (!cleaned.sku) {
-      setError("SKU is required.");
+      setError(t("products.errors.skuRequired"));
       return;
     }
 
     const value = Number(cleaned.value);
     if (Number.isNaN(value)) {
-      setError("Value must be a valid number.");
+      setError(t("products.errors.invalidValue"));
       return;
     }
 
@@ -158,7 +160,7 @@ export default function ProductsPage() {
         cancelEditing();
         fetchProducts();
       })
-      .catch(() => setError("Failed to update product."))
+      .catch(() => setError(t("products.errors.update")))
       .finally(() => setSaving(false));
   };
 
@@ -166,26 +168,39 @@ export default function ProductsPage() {
     setError(null);
     deleteProduct(id)
       .then(() => fetchProducts())
-      .catch(() => setError("Failed to delete product."));
+      .catch(() => setError(t("products.errors.delete")));
   };
 
   const tableHeadings = isAdmin
-    ? ["Product", "SKU", "Value", "Location", "Schema Fields", "Actions"]
-    : ["Product", "SKU", "Value", "Location", "Schema Fields"];
+    ? [
+        t("common.labels.product"),
+        t("common.labels.sku"),
+        t("common.labels.value"),
+        t("common.labels.location"),
+        t("common.labels.schemaFields"),
+        t("common.labels.actions"),
+      ]
+    : [
+        t("common.labels.product"),
+        t("common.labels.sku"),
+        t("common.labels.value"),
+        t("common.labels.location"),
+        t("common.labels.schemaFields"),
+      ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <Badge tone="green">Products API</Badge>
-          <h1 className="mt-3 text-3xl font-light text-[#10231B]">Products</h1>
+          <Badge tone="green">{t("products.badge")}</Badge>
+          <h1 className="mt-3 text-3xl font-light text-[#10231B]">{t("products.title")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">
-            Table-first CRUD tester for inventory products with required SKU and warehouse location fields.
+            {t("products.description")}
           </p>
         </div>
         <Button variant="secondary" onClick={fetchProducts} disabled={loading}>
           <RefreshCw size={16} />
-          Refresh
+          {t("common.actions.refresh")}
         </Button>
       </div>
 
@@ -198,27 +213,27 @@ export default function ProductsPage() {
       {isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle>Create product</CardTitle>
+            <CardTitle>{t("products.create.title")}</CardTitle>
             <CardDescription>
-              Create inventory rows with the backend product schema, including required SKU and optional location fields.
+              {t("products.create.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
-              <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Product name" />
-              <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder="SKU" />
+              <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder={t("products.create.placeholders.name")} />
+              <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder={t("products.create.placeholders.sku")} />
               <Input
                 type="number"
                 value={draft.value || ""}
                 onChange={(event) => setDraft({ ...draft, value: Number(event.target.value) })}
-                placeholder="Value"
+                placeholder={t("products.create.placeholders.value")}
               />
-              <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder="Site" />
-              <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder="Aisle" />
-              <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder="Rack" />
+              <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder={t("products.create.placeholders.site")} />
+              <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder={t("products.create.placeholders.aisle")} />
+              <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder={t("products.create.placeholders.rack")} />
               <Button onClick={handleCreate} disabled={saving}>
                 <Plus size={16} />
-                Add
+                {t("common.actions.add")}
               </Button>
             </div>
           </CardContent>
@@ -228,18 +243,18 @@ export default function ProductsPage() {
       <Card>
         <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <CardTitle>Product table</CardTitle>
-            <CardDescription>{filteredProducts.length} visible products from /products</CardDescription>
+            <CardTitle>{t("products.table.title")}</CardTitle>
+            <CardDescription>{t("common.formats.visibleProducts", { count: filteredProducts.length })}</CardDescription>
           </div>
           <div className="w-full xl:w-80">
-            <Input value={query} onChange={(event) => setQuery(event.target.value)} leftSlot={<Search size={16} />} placeholder="Search name, SKU, location..." />
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} leftSlot={<Search size={16} />} placeholder={t("products.table.searchPlaceholder")} />
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <EmptyState icon={Package} title="Loading products" description="Calling GET /products and waiting for the API response." />
+            <EmptyState icon={Package} title={t("products.table.loadingTitle")} description={t("products.table.loadingDescription")} />
           ) : filteredProducts.length === 0 ? (
-            <EmptyState icon={Package} title="No products found" description="Create a product or clear the search filter to see rows here." />
+            <EmptyState icon={Package} title={t("products.table.emptyTitle")} description={t("products.table.emptyDescription")} />
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-[#D9E4DD]">
               <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm">
@@ -264,7 +279,7 @@ export default function ProductsPage() {
                           ) : (
                             <div>
                               <p className="font-medium text-[#10231B]">{product.name}</p>
-                              <p className="text-xs text-[#5B6B63]">Product #{product.id}</p>
+                              <p className="text-xs text-[#5B6B63]">{t("common.formats.productId", { id: product.id })}</p>
                             </div>
                           )}
                         </td>
@@ -272,7 +287,7 @@ export default function ProductsPage() {
                           {isEditing ? (
                             <Input value={editDraft.sku || ""} onChange={(event) => setEditDraft({ ...editDraft, sku: event.target.value })} />
                           ) : (
-                            <Badge tone={product.sku ? "green" : "neutral"}>{product.sku || "pending"}</Badge>
+                            <Badge tone={product.sku ? "green" : "neutral"}>{product.sku || t("common.states.pending")}</Badge>
                           )}
                         </td>
                         <td className="border-b border-[#D9E4DD] px-4 py-3">
@@ -283,27 +298,31 @@ export default function ProductsPage() {
                               onChange={(event) => setEditDraft({ ...editDraft, value: Number(event.target.value) })}
                             />
                           ) : (
-                            <span className="font-semibold text-[#00684A]">₺{product.value}</span>
+                            <span className="font-semibold text-[#00684A]">{t("common.formats.currencyTry", { value: product.value })}</span>
                           )}
                         </td>
                         <td className="border-b border-[#D9E4DD] px-4 py-3">
                           {isEditing ? (
                             <div className="grid grid-cols-3 gap-2">
-                              <Input value={editDraft.location_site || ""} onChange={(event) => setEditDraft({ ...editDraft, location_site: event.target.value })} placeholder="Site" />
-                              <Input value={editDraft.location_aisle || ""} onChange={(event) => setEditDraft({ ...editDraft, location_aisle: event.target.value })} placeholder="Aisle" />
-                              <Input value={editDraft.location_rack || ""} onChange={(event) => setEditDraft({ ...editDraft, location_rack: event.target.value })} placeholder="Rack" />
+                              <Input value={editDraft.location_site || ""} onChange={(event) => setEditDraft({ ...editDraft, location_site: event.target.value })} placeholder={t("products.create.placeholders.site")} />
+                              <Input value={editDraft.location_aisle || ""} onChange={(event) => setEditDraft({ ...editDraft, location_aisle: event.target.value })} placeholder={t("products.create.placeholders.aisle")} />
+                              <Input value={editDraft.location_rack || ""} onChange={(event) => setEditDraft({ ...editDraft, location_rack: event.target.value })} placeholder={t("products.create.placeholders.rack")} />
                             </div>
                           ) : (
                             <span className="inline-flex items-center gap-2 text-[#5B6B63]">
                               <MapPin size={15} />
-                              {location || "Location pending"}
+                              {location || t("products.table.locationPending")}
                             </span>
                           )}
                         </td>
                         <td className="border-b border-[#D9E4DD] px-4 py-3">
                           <div className="flex flex-wrap gap-2">
-                            <Badge tone={product.qr_code_pattern ? "blue" : "neutral"}>QR {product.qr_code_pattern ? "set" : "pending"}</Badge>
-                            <Badge tone={product.sku ? "green" : "warning"}>SKU {product.sku ? "ready" : "missing"}</Badge>
+                            <Badge tone={product.qr_code_pattern ? "blue" : "neutral"}>
+                              {t("common.badges.qrStatus", { status: product.qr_code_pattern ? t("common.states.set") : t("common.states.pending") })}
+                            </Badge>
+                            <Badge tone={product.sku ? "green" : "warning"}>
+                              {t("common.badges.skuStatus", { status: product.sku ? t("common.states.ready") : t("common.states.missing") })}
+                            </Badge>
                           </div>
                         </td>
                         {isAdmin && (
@@ -312,19 +331,19 @@ export default function ProductsPage() {
                               <div className="flex gap-2">
                                 <Button size="sm" onClick={() => handleUpdate(product.id)} disabled={saving}>
                                   <Save size={14} />
-                                  Save
+                                  {t("common.actions.save")}
                                 </Button>
                                 <Button size="sm" variant="secondary" onClick={cancelEditing}>
                                   <X size={14} />
-                                  Cancel
+                                  {t("common.actions.cancel")}
                                 </Button>
                               </div>
                             ) : (
                               <div className="flex gap-2">
-                                <Button size="icon" variant="secondary" aria-label="Edit product" onClick={() => startEditing(product)}>
+                                <Button size="icon" variant="secondary" aria-label={t("common.aria.editProduct")} onClick={() => startEditing(product)}>
                                   <Edit3 size={15} />
                                 </Button>
-                                <Button size="icon" variant="danger" aria-label="Delete product" onClick={() => handleDelete(product.id)}>
+                                <Button size="icon" variant="danger" aria-label={t("common.aria.deleteProduct")} onClick={() => handleDelete(product.id)}>
                                   <Trash2 size={15} />
                                 </Button>
                               </div>

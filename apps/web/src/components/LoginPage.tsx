@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Boxes, LogIn } from "lucide-react";
 
@@ -15,6 +16,7 @@ interface LoginLocationState {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function LoginPage() {
       await login(username.trim(), password);
       navigate(redirectTo, { replace: true });
     } catch {
-      setError("Username or password is incorrect.");
+      setError(t("auth.error"));
     }
   };
 
@@ -51,15 +53,15 @@ export default function LoginPage() {
             <Boxes size={24} />
           </div>
           <div>
-            <p className="text-2xl font-medium text-[#10231B]">Aeroventory</p>
-            <p className="text-sm font-semibold text-[#5B6B63]">Inventory Core Console</p>
+            <p className="text-2xl font-medium text-[#10231B]">{t("common.brand.name")}</p>
+            <p className="text-sm font-semibold text-[#5B6B63]">{t("common.brand.consoleName")}</p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>Use your inventory account to open the workspace.</CardDescription>
+            <CardTitle>{t("auth.title")}</CardTitle>
+            <CardDescription>{t("auth.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleSubmit}>
@@ -70,12 +72,12 @@ export default function LoginPage() {
               )}
 
               <label className="block">
-                <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">Username</span>
+                <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("auth.username")}</span>
                 <Input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" />
               </label>
 
               <label className="block">
-                <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">Password</span>
+                <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("auth.password")}</span>
                 <Input
                   type="password"
                   value={password}
@@ -86,7 +88,7 @@ export default function LoginPage() {
 
               <Button type="submit" size="lg" className="w-full" disabled={loading || !username.trim() || !password}>
                 <LogIn size={18} />
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? t("common.actions.signingIn") : t("common.actions.signIn")}
               </Button>
             </form>
           </CardContent>
