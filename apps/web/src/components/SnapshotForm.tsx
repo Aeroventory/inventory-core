@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, ImagePlus, PackagePlus, Save, Trash2, UploadCloud } from "lucide-react";
+import { CheckCircle2, ImagePlus, Save, UploadCloud } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import GallerySelector from "@/components/GallerySelector";
 import { Input } from "@/components/ui/input";
-import { Product } from "@/models/Product";
+import { MediaAsset } from "@/models/Media";
 import { saveFile, uploadFile } from "@/services/file-endpoints";
-import { getProducts } from "@/services/product-endpoints";
-import { addSnapshotItem, createSnapshot } from "@/services/snapshot-endpoints";
+import { updateSnapshotMedia } from "@/services/media-endpoints";
+import { createSnapshot } from "@/services/snapshot-endpoints";
 
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
@@ -19,44 +19,43 @@ import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 registerPlugin(FilePondPluginImagePreview);
 
-interface PendingItem {
-  product: Product;
-  quantity: number;
+function todayIso() {
+  const today = new Date();
+  today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  return today.toISOString().slice(0, 10);
+}
+
+function mediaAttachments(images: MediaAsset[], primaryImageId: number | null) {
+  return images.map((image, index) => ({
+    media_asset_id: image.id,
+    sort_order: index,
+    is_primary: image.id === primaryImageId,
+  }));
 }
 
 interface SnapshotFormProps {
+  activeBoxCount?: number;
+  activeUnitCount?: number;
   onSaved?: () => void;
 }
 
-export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
+export default function SnapshotForm({
+  activeBoxCount = 0,
+  activeUnitCount = 0,
+  onSaved,
+}: SnapshotFormProps) {
   const { t } = useTranslation();
   const [name, setName] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
-  const [quantities, setQuantities] = useState<Record<number, string>>({});
+  const [snapshotDate, setSnapshotDate] = useState(todayIso);
+  const [isManual, setIsManual] = useState(true);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [tempFilename, setTempFilename] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<MediaAsset[]>([]);
+  const [primaryImageId, setPrimaryImageId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const loadProducts = () => {
-    getProducts()
-      .then((res) => setProducts(res.data))
-      .catch(() => setError(t("snapshots.form.errors.loadProducts")));
-  };
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const availableProducts = useMemo(
-    () => products.filter((product) => !pendingItems.some((item) => item.product.id === product.id)),
-    [products, pendingItems],
-  );
-
-  const totalQuantity = pendingItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
@@ -76,45 +75,15 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
     }
   };
 
-  const handleAddItem = (product: Product) => {
-    const qty = Number.parseInt(quantities[product.id] || "0", 10);
-    if (qty <= 0) return;
-
-    setPendingItems((items) => {
-      const existing = items.find((item) => item.product.id === product.id);
-      if (!existing) return [...items, { product, quantity: qty }];
-      return items.map((item) =>
-        item.product.id === product.id ? { ...item, quantity: item.quantity + qty } : item,
-      );
-    });
-    setQuantities({ ...quantities, [product.id]: "" });
-  };
-
-  const updatePendingQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) return;
-    setPendingItems((items) =>
-      items.map((item) => (item.product.id === productId ? { ...item, quantity } : item)),
-    );
-  };
-
-  const removePendingItem = (productId: number) => {
-    setPendingItems((items) => items.filter((item) => item.product.id !== productId));
-  };
-
   const handleSave = async () => {
     if (!name.trim()) {
       setError(t("snapshots.form.errors.snapshotNameRequired"));
       return;
     }
-    if (!filePath) {
-      setError(t("snapshots.form.errors.uploadBeforeSave"));
+    if (!snapshotDate) {
+      setError(t("snapshots.form.errors.snapshotDateRequired"));
       return;
     }
-    if (pendingItems.length === 0) {
-      setError(t("snapshots.form.errors.addAtLeastOneProduct"));
-      return;
-    }
-
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -123,23 +92,23 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
       const snapshotRes = await createSnapshot({
         name: name.trim(),
         file_path: filePath,
+        snapshot_date: snapshotDate,
+        is_manual: isManual,
       });
-      const snapshotId = snapshotRes.data.id;
-
-      for (const item of pendingItems) {
-        await addSnapshotItem({
-          product_id: item.product.id,
-          snapshot_id: snapshotId,
-          quantity: item.quantity,
+      if (selectedImages.length > 0) {
+        await updateSnapshotMedia(snapshotRes.data.id, {
+          attachments: mediaAttachments(selectedImages, primaryImageId),
         });
       }
 
-      setSuccess(t("snapshots.form.success", { name: name.trim(), count: pendingItems.length }));
+      setSuccess(t("snapshots.form.success", { name: name.trim(), count: snapshotRes.data.items.length }));
       setName("");
+      setSnapshotDate(todayIso());
+      setIsManual(true);
       setFilePath(null);
       setTempFilename(null);
-      setPendingItems([]);
-      setQuantities({});
+      setSelectedImages([]);
+      setPrimaryImageId(null);
       onSaved?.();
     } catch {
       setError(t("snapshots.form.errors.save"));
@@ -157,11 +126,16 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
             <CardDescription>{t("snapshots.form.description")}</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge tone={filePath ? "green" : "neutral"}>{filePath ? t("common.badges.imageSaved") : t("common.badges.imagePending")}</Badge>
-            <Badge tone={pendingItems.length ? "blue" : "neutral"}>
+            <Badge tone={filePath || selectedImages.length ? "green" : "neutral"}>
+              {filePath || selectedImages.length ? t("common.badges.imageSaved") : t("common.badges.imagePending")}
+            </Badge>
+            <Badge tone={isManual ? "purple" : "blue"}>
+              {isManual ? t("snapshots.source.manual") : t("snapshots.source.drone")}
+            </Badge>
+            <Badge tone={activeBoxCount ? "blue" : "neutral"}>
               {t("common.formats.compactPair", {
-                first: t("common.formats.itemRows", { count: pendingItems.length }),
-                second: t("common.formats.units", { count: totalQuantity }),
+                first: t("common.formats.boxes", { count: activeBoxCount }),
+                second: t("common.formats.units", { count: activeUnitCount }),
               })}
             </Badge>
           </div>
@@ -187,6 +161,37 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
               <Input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("snapshots.form.snapshotNamePlaceholder")} />
             </label>
 
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotDate")}</span>
+                <Input
+                  type="date"
+                  required
+                  value={snapshotDate}
+                  onChange={(event) => setSnapshotDate(event.target.value)}
+                />
+              </label>
+              <div>
+                <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotSource")}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isManual}
+                  className="flex h-10 min-w-[170px] items-center justify-between gap-3 rounded-xl border border-[#D9E4DD] bg-white px-3 text-sm font-semibold text-[#10231B] outline-none transition focus:border-[#00684A] focus:ring-4 focus:ring-[rgba(0,104,74,0.12)]"
+                  onClick={() => setIsManual((value) => !value)}
+                >
+                  <span>{isManual ? t("snapshots.source.manual") : t("snapshots.source.drone")}</span>
+                  <span
+                    className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${
+                      isManual ? "justify-end bg-[#00684A]" : "justify-start bg-[#94A3B8]"
+                    }`}
+                  >
+                    <span className="h-4 w-4 rounded-full bg-white shadow-sm" />
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div>
               <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotImage")}</span>
               <FilePond
@@ -209,88 +214,28 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
                 {filePath && <Badge tone="green">{t("common.badges.savedFile", { path: filePath })}</Badge>}
               </div>
             </div>
+
+            <GallerySelector
+              selectedImages={selectedImages}
+              primaryImageId={primaryImageId}
+              onChange={(images, nextPrimaryImageId) => {
+                setSelectedImages(images);
+                setPrimaryImageId(nextPrimaryImageId);
+              }}
+              title={t("snapshots.form.galleryTitle")}
+              description={t("snapshots.form.galleryDescription")}
+            />
           </div>
 
           <div className="rounded-2xl border border-[#D9E4DD] bg-[#F7FAF8] p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <p className="font-medium text-[#10231B]">{t("snapshots.form.addedItems.title")}</p>
-                <p className="text-sm text-[#5B6B63]">{t("snapshots.form.addedItems.description")}</p>
-              </div>
-              <PackagePlus size={20} className="text-[#00684A]" />
+            <ImagePlus size={22} className="mb-3 text-[#00684A]" />
+            <p className="font-medium text-[#10231B]">{t("snapshots.form.poolCapture.title")}</p>
+            <p className="mt-2 text-sm text-[#5B6B63]">{t("snapshots.form.poolCapture.description")}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge tone={activeBoxCount ? "blue" : "neutral"}>{t("common.formats.boxes", { count: activeBoxCount })}</Badge>
+              <Badge tone={activeUnitCount ? "green" : "neutral"}>{t("common.formats.units", { count: activeUnitCount })}</Badge>
             </div>
-            {pendingItems.length === 0 ? (
-              <EmptyState icon={ImagePlus} title={t("snapshots.form.addedItems.emptyTitle")} description={t("snapshots.form.addedItems.emptyDescription")} className="min-h-[150px] bg-white" />
-            ) : (
-              <div className="space-y-2">
-                {pendingItems.map((item) => (
-                  <div key={item.product.id} className="flex items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-[#10231B]">{item.product.name}</p>
-                      <p className="text-xs text-[#5B6B63]">{item.product.sku || t("common.formats.productId", { id: item.product.id })}</p>
-                    </div>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(event) => updatePendingQuantity(item.product.id, Number(event.target.value))}
-                      className="w-20 text-center"
-                    />
-                    <Button size="icon" variant="secondary" aria-label={t("common.aria.removeItem")} onClick={() => removePendingItem(item.product.id)}>
-                      <Trash2 size={15} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        </div>
-
-        <div>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="font-medium text-[#10231B]">{t("snapshots.form.addProducts.title")}</p>
-              <p className="text-sm text-[#5B6B63]">{t("snapshots.form.addProducts.description")}</p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={loadProducts}>
-              {t("common.actions.refreshProducts")}
-            </Button>
-          </div>
-
-          {availableProducts.length === 0 ? (
-            <EmptyState
-              icon={PackagePlus}
-              title={products.length === 0 ? t("snapshots.form.addProducts.emptyNoProductsTitle") : t("snapshots.form.addProducts.emptyAllAddedTitle")}
-              description={products.length === 0 ? t("snapshots.form.addProducts.emptyNoProductsDescription") : t("snapshots.form.addProducts.emptyAllAddedDescription")}
-            />
-          ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
-              {availableProducts.map((product) => (
-                <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-[#10231B]">{product.name}</p>
-                    <p className="text-xs text-[#5B6B63]">
-                      {t("common.formats.compactPair", {
-                        first: product.sku || t("common.formats.productId", { id: product.id }),
-                        second: t("common.formats.currencyTry", { value: product.value }),
-                      })}
-                    </p>
-                  </div>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={quantities[product.id] || ""}
-                    onChange={(event) => setQuantities({ ...quantities, [product.id]: event.target.value })}
-                    placeholder={t("snapshots.form.addProducts.qtyPlaceholder")}
-                    className="w-24"
-                  />
-                  <Button variant="soft" size="sm" onClick={() => handleAddItem(product)}>
-                    {t("common.actions.add")}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <Button size="lg" className="w-full" disabled={saving || uploading} onClick={handleSave}>

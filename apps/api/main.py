@@ -10,8 +10,11 @@ from sqlalchemy.exc import OperationalError
 from core.config import settings
 from db.session import engine
 from routers.auth import router as auth_router
+from routers.inventory_boxes import router as inventory_boxes_router
+from routers.media import router as media_router
 from routers.products import router as products_router
 from routers.files import router as files_router
+from routers.production_plans import router as production_plans_router
 from routers.reports import router as reports_router
 from routers.snapshots import router as snapshots_router
 
@@ -47,8 +50,11 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(products_router)
+app.include_router(inventory_boxes_router)
 app.include_router(files_router)
+app.include_router(media_router)
 app.include_router(snapshots_router)
+app.include_router(production_plans_router)
 app.include_router(reports_router)
 
 uploads_dir = Path(__file__).resolve().parent / "storage" / "uploads"

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
+  BarChart3,
   Boxes,
   ChefHat,
   ChevronDown,
@@ -10,6 +11,7 @@ import {
   Database,
   Globe,
   Home,
+  Images,
   LogOut,
   Menu,
   Package,
@@ -40,6 +42,8 @@ const viewIcons: Record<ViewId, LucideIcon> = {
   dashboard: Home,
   products: Package,
   snapshots: Boxes,
+  gallery: Images,
+  dailyReport: BarChart3,
   productionPlan: ClipboardList,
   kitchen: ChefHat,
 };

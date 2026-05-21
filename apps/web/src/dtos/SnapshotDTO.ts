@@ -1,6 +1,8 @@
 export interface SnapshotCreateDTO {
   name: string;
-  file_path: string;
+  file_path?: string | null;
+  snapshot_date: string;
+  is_manual: boolean;
 }
 
 export interface SnapshotItemCreateDTO {

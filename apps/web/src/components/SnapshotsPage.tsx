@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
+import InventoryBoxPool from "@/components/InventoryBoxPool";
 import SnapshotForm from "@/components/SnapshotForm";
 import SnapshotList from "@/components/SnapshotList";
 import { useAuthStore } from "@/stores/auth-store";
@@ -9,7 +10,10 @@ import { useAuthStore } from "@/stores/auth-store";
 export default function SnapshotsPage() {
   const { t } = useTranslation();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [poolStats, setPoolStats] = useState({ activeBoxCount: 0, activeUnitCount: 0 });
   const isAdmin = useAuthStore((state) => state.isAdmin());
+
+  const refreshSnapshots = () => setRefreshKey((value) => value + 1);
 
   return (
     <div className="space-y-6">
@@ -21,7 +25,19 @@ export default function SnapshotsPage() {
         </p>
       </div>
 
-      {isAdmin && <SnapshotForm onSaved={() => setRefreshKey((value) => value + 1)} />}
+      <InventoryBoxPool
+        isAdmin={isAdmin}
+        refreshKey={refreshKey}
+        onChanged={refreshSnapshots}
+        onStatsChange={setPoolStats}
+      />
+      {isAdmin && (
+        <SnapshotForm
+          activeBoxCount={poolStats.activeBoxCount}
+          activeUnitCount={poolStats.activeUnitCount}
+          onSaved={refreshSnapshots}
+        />
+      )}
       <SnapshotList refreshKey={refreshKey} />
     </div>
   );

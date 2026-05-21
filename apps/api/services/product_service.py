@@ -1,18 +1,25 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
+from models.media import ProductMediaAsset
 from models.product import Product
 from schemas.product import ProductCreate, ProductUpdate
 
 
+def _product_query(db: Session):
+    return db.query(Product).options(
+        joinedload(Product.media_links).joinedload(ProductMediaAsset.media_asset)
+    )
+
+
 def get_all_products(db: Session) -> list[Product]:
-    return db.query(Product).all()
+    return _product_query(db).order_by(Product.id).all()
 
 
 def create_product(db: Session, product_in: ProductCreate) -> Product:
     product = Product(**product_in.model_dump())
     db.add(product)
     db.commit()
-    db.refresh(product)
-    return product
+    return _product_query(db).filter(Product.id == product.id).first()
 
 
 def update_product(db: Session, product_id: int, product_in: ProductUpdate) -> Product | None:
@@ -23,8 +30,7 @@ def update_product(db: Session, product_id: int, product_in: ProductUpdate) -> P
     for key, val in update_data.items():
         setattr(product, key, val)
     db.commit()
-    db.refresh(product)
-    return product
+    return _product_query(db).filter(Product.id == product.id).first()
 
 
 def delete_product(db: Session, product_id: int) -> bool:

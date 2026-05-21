@@ -27,6 +27,7 @@
       "deleteProduct": "Delete product",
       "editProduct": "Edit product",
       "logOut": "Log out",
+      "manageImages": "Manage images",
       "openNavigation": "Open navigation",
       "refreshApiHealth": "Refresh API health",
       "removeItem": "Remove item"
@@ -50,6 +51,8 @@
     "formats": {
       "currencyTry": "₺{{value}}",
       "compactPair": "{{first}} · {{second}}",
+      "boxes_one": "{{count}} box",
+      "boxes_other": "{{count}} boxes",
       "itemRows_one": "{{count}} item row",
       "itemRows_other": "{{count}} item rows",
       "productId": "Product #{{id}}",
@@ -62,18 +65,26 @@
     "labels": {
       "actions": "Actions",
       "aisle": "Aisle",
+      "box": "Box",
       "confidence": "Confidence",
+      "actual": "Actual",
+      "date": "Date",
+      "delta": "Delta",
+      "image": "Image",
       "line": "Line",
       "location": "Location",
+      "planned": "Planned",
       "product": "Product",
       "quantity": "Quantity",
       "rack": "Rack",
+      "rawMaterials": "Raw Materials",
       "schemaFields": "Schema Fields",
       "site": "Site",
       "sku": "SKU",
       "status": "Status",
       "target": "Target",
-      "value": "Value"
+      "value": "Value",
+      "variance": "Variance"
     },
     "roles": {
       "admin": "admin",
@@ -117,6 +128,14 @@
       "label": "Snapshots",
       "description": "Image and inventory snapshots"
     },
+    "gallery": {
+      "label": "Gallery",
+      "description": "Reusable product and snapshot images"
+    },
+    "dailyReport": {
+      "label": "Daily Comparison",
+      "description": "Stock deltas by date"
+    },
     "productionPlan": {
       "label": "Production Plan",
       "description": "Planner workspace"
@@ -144,21 +163,26 @@
       "loadData": "Could not load dashboard data from the API."
     },
     "hero": {
-      "title": "Inventory workflow console",
-      "description": "A light, endpoint-first workspace for testing products, snapshots, uploads, and API health without opening Postman."
+      "title": "Inventory dashboard",
+      "description": "Current stock, daily movement, and the next operational shortcuts in one view."
     },
     "metrics": {
       "products": {
         "label": "Products",
-        "description": "Rows returned from /products"
+        "description": "Products in the latest stock summary"
       },
       "latestUnits": {
         "label": "Latest Units",
-        "description": "Quantity total in the newest snapshot"
+        "description": "Total units in /reports/stock-summary"
+      },
+      "latestSnapshotDate": {
+        "label": "Latest Snapshot",
+        "description": "Snapshot #{{id}}",
+        "empty": "No snapshot summary yet"
       },
       "snapshots": {
         "label": "Snapshots",
-        "description": "Saved image-backed inventory runs"
+        "description": "Recent saved inventory runs"
       },
       "dbStatus": {
         "label": "DB Status"
@@ -170,16 +194,39 @@
       "browseProducts": "Browse products",
       "uploadImageAndSaveSnapshot": "Upload image and save snapshot",
       "reviewSnapshots": "Review snapshots",
+      "openDailyComparison": "Open daily comparison",
       "openProductionPlan": "Open production plan",
       "openKitchen": "Open the kitchen design contract",
       "title": "Workflow shortcuts",
-      "description": "Move through the testing loop without leaving the console."
+      "description": "Large, direct links for the inventory workflow."
     },
     "latestSnapshot": {
       "title": "Latest snapshot",
       "description": "Fast check that the image workflow is producing useful inventory rows.",
       "noSnapshotsTitle": "No snapshots yet",
       "noSnapshotsDescription": "Upload an image and save a snapshot to see the latest detected inventory here."
+    },
+    "dailyDelta": {
+      "title": "Daily delta",
+      "description": "Top movement from the latest stock summary date.",
+      "descriptionWithDate": "{{date}} compared with {{baseline}}",
+      "openReport": "Open report",
+      "loadingTitle": "Loading daily movement",
+      "loadingDescription": "Calling the daily delta report for the latest snapshot date.",
+      "emptyTitle": "No delta available",
+      "emptyDescription": "Save snapshots on comparable dates to see stock movement here.",
+      "gainers": "Top gainers",
+      "losers": "Top decreases",
+      "noGainers": "No increases for this date.",
+      "noLosers": "No decreases for this date."
+    },
+    "recentSnapshots": {
+      "title": "Recent snapshots",
+      "description": "Open a snapshot's daily comparison in one click.",
+      "loadingTitle": "Loading snapshots",
+      "loadingDescription": "Fetching recent saved snapshot runs.",
+      "emptyTitle": "No snapshots yet",
+      "emptyDescription": "Create a snapshot to see quick links here."
     }
   },
   "products": {
@@ -193,18 +240,22 @@
       "invalidValue": "Value must be a valid number.",
       "create": "Failed to create product.",
       "update": "Failed to update product.",
+      "updateImages": "Failed to update product images.",
       "delete": "Failed to delete product."
     },
     "create": {
       "title": "Create product",
       "description": "Create inventory rows with the backend product schema, including required SKU and optional location fields.",
+      "galleryTitle": "Product images",
+      "galleryDescription": "Upload or select images before creating this product.",
       "placeholders": {
         "name": "Product name",
         "sku": "SKU",
         "value": "Value",
         "site": "Site",
         "aisle": "Aisle",
-        "rack": "Rack"
+        "rack": "Rack",
+        "rawMaterials": "Raw materials"
       }
     },
     "table": {
@@ -214,32 +265,73 @@
       "loadingDescription": "Calling GET /products and waiting for the API response.",
       "emptyTitle": "No products found",
       "emptyDescription": "Create a product or clear the search filter to see rows here.",
-      "locationPending": "Location pending"
+      "locationPending": "Location pending",
+      "rawMaterialsPending": "Materials pending"
+    },
+    "gallery": {
+      "title": "Images for {{product}}",
+      "description": "Attach gallery images to this product and choose the primary image used in product tables.",
+      "selectorDescription": "Upload new product photos or pick from the existing gallery."
+    }
+  },
+  "gallery": {
+    "badge": "Media Library",
+    "pageTitle": "Gallery",
+    "pageDescription": "Upload reusable images and review the product or snapshot media library.",
+    "title": "Image gallery",
+    "uploadTitle": "Upload images",
+    "uploadDescription": "Images are saved to local gallery storage and can be attached to products or snapshots.",
+    "libraryTitle": "Gallery library",
+    "filePondLabel": "Drop images or <span class=\"filepond--label-action\">browse</span>",
+    "upload": "Upload images",
+    "searchPlaceholder": "Search images...",
+    "selectedCount_one": "{{count}} image selected",
+    "selectedCount_other": "{{count}} images selected",
+    "selected": "selected",
+    "available": "available",
+    "makePrimary": "Make primary image",
+    "loadingTitle": "Loading gallery",
+    "loadingDescription": "Fetching reusable uploaded images.",
+    "emptyTitle": "No images found",
+    "emptyDescription": "Upload images or clear the search filter.",
+    "errors": {
+      "load": "Failed to load the gallery.",
+      "upload": "Failed to upload gallery images.",
+      "delete": "Failed to delete the image. It may still be attached to a product or snapshot."
     }
   },
   "snapshots": {
     "page": {
       "badge": "Snapshots API",
       "title": "Snapshots",
-      "description": "Upload images, create manual snapshot rows, and inspect the saved inventory history in one workflow."
+      "description": "Manage active inventory boxes, capture the current pool, and inspect saved snapshot history in one workflow."
     },
     "form": {
       "errors": {
         "loadProducts": "Failed to load products.",
         "uploadImage": "Failed to upload and save the image.",
         "snapshotNameRequired": "Snapshot name is required.",
+        "snapshotDateRequired": "Snapshot date is required.",
         "uploadBeforeSave": "Upload an image before saving the snapshot.",
         "addAtLeastOneProduct": "Add at least one product row to the snapshot.",
         "save": "Failed to save snapshot."
       },
-      "success_one": "Snapshot \"{{name}}\" saved with {{count}} item row.",
-      "success_other": "Snapshot \"{{name}}\" saved with {{count}} item rows.",
-      "title": "New snapshot",
-      "description": "Upload an image, pick products, and save a snapshot through the same API flow.",
+      "success_one": "Snapshot \"{{name}}\" captured with {{count}} box.",
+      "success_other": "Snapshot \"{{name}}\" captured with {{count}} boxes.",
+      "title": "Capture current pool",
+      "description": "Save the current active inventory boxes as a timestamped snapshot. An image is optional for manual captures.",
       "snapshotName": "Snapshot name",
       "snapshotNamePlaceholder": "e.g. May 2026 Count",
+      "snapshotDate": "Snapshot date",
+      "snapshotSource": "Source",
       "snapshotImage": "Snapshot image",
       "filePondLabel": "Drop an image or <span class=\"filepond--label-action\">browse</span>",
+      "galleryTitle": "Snapshot gallery",
+      "galleryDescription": "Attach existing gallery images to this snapshot or upload a reusable batch.",
+      "poolCapture": {
+        "title": "Current pool capture",
+        "description": "Saving this snapshot copies every active box from the pool. Boxes that remain active across snapshots do not count as daily delta."
+      },
       "addedItems": {
         "title": "Added items",
         "description": "These rows will be POSTed to /snapshots/items after the snapshot is created.",
@@ -256,43 +348,142 @@
         "qtyPlaceholder": "Qty"
       }
     },
+    "boxes": {
+      "title": "Inventory boxes",
+      "description": "Manage the active box pool before capturing snapshots.",
+      "errors": {
+        "load": "Failed to load inventory boxes.",
+        "invalid": "Choose a product, quantity, and box date.",
+        "save": "Failed to save inventory box.",
+        "remove": "Failed to remove inventory box."
+      },
+      "form": {
+        "boxCodePlaceholder": "Box code (optional)",
+        "productPlaceholder": "Select product",
+        "quantityPlaceholder": "Qty",
+        "selectedProduct": "Selected SKU {{sku}} · value ₺{{value}}"
+      },
+      "status": {
+        "active": "Active",
+        "removed": "Removed"
+      },
+      "loadingTitle": "Loading inventory boxes",
+      "loadingDescription": "Fetching the active and removed box pool.",
+      "emptyTitle": "No boxes yet",
+      "emptyDescription": "Add boxes to the active pool, then capture a snapshot."
+    },
+    "source": {
+      "manual": "Manual",
+      "drone": "Drone"
+    },
     "list": {
       "error": "Failed to load snapshots from the API.",
       "title": "Snapshot history",
-      "description": "Saved inventory runs with image previews, item rows, and confidence-ready badges.",
+      "description": "Saved inventory runs with captured boxes and confidence-ready badges.",
+      "compare": "Compare",
       "searchPlaceholder": "Search snapshots...",
       "loadingTitle": "Loading snapshots",
       "loadingDescription": "Calling GET /snapshots and waiting for saved inventory runs.",
       "emptyTitle": "No snapshots found",
       "emptyDescription": "Create a snapshot or clear the search filter to see image-backed runs here.",
-      "noRowsTitle": "No item rows",
-      "noRowsDescription": "This snapshot exists, but no products were attached."
+      "noRowsTitle": "No boxes captured",
+      "noRowsDescription": "This snapshot exists, but no active boxes were captured."
     }
+  },
+  "reportsDaily": {
+    "badge": "Reports API",
+    "title": "Daily Comparison",
+    "description": "Compare one snapshot date against the previous day and review product-level movement.",
+    "dateLabel": "Comparison date",
+    "errors": {
+      "load": "Failed to load the daily comparison report."
+    },
+    "metrics": {
+      "increases": "Increases",
+      "decreases": "Decreases",
+      "unchanged": "Unchanged"
+    },
+    "table": {
+      "title": "Delta table",
+      "description": "Select a date to compare the latest snapshot from that day with the previous day.",
+      "descriptionWithDates": "{{date}} compared with {{baseline}}",
+      "yesterday": "Yesterday",
+      "today": "Today",
+      "added": "Added",
+      "removed": "Removed",
+      "boxes": "Boxes",
+      "boxDetails": "Box details",
+      "noBoxChanges": "No box membership changes"
+    },
+    "status": {
+      "added": "Added",
+      "consumed": "Consumed",
+      "unchanged": "Unchanged"
+    },
+    "loadingTitle": "Loading comparison",
+    "loadingDescription": "Calling GET /reports/daily-delta for the selected date.",
+    "emptyTitle": "No snapshot for this date",
+    "emptyDescription": "No saved snapshot was found for {{date}}.",
+    "noRowsTitle": "No rows",
+    "noRowsDescription": "The report loaded, but it did not include product rows."
   },
   "productionPlan": {
     "badge": "Planner",
     "title": "Production Plan",
-    "description": "A planner workspace for inventory-driven production scheduling.",
+    "description": "Enter target quantities by product and date, then compare the plan against actual snapshot counts.",
+    "errors": {
+      "load": "Failed to load production planning data.",
+      "saveCell": "Failed to save the planning cell.",
+      "invalidQuantity": "Quantity must be a whole number of zero or more.",
+      "invalidRange": "Choose a product and a valid date range.",
+      "bulk": "Failed to apply the bulk production plan."
+    },
+    "view": {
+      "week": "Week",
+      "month": "Month"
+    },
+    "actions": {
+      "previousWindow": "Previous planning window",
+      "nextWindow": "Next planning window",
+      "saving": "Saving..."
+    },
     "metrics": {
-      "lines": {
-        "label": "Lines",
-        "value": "3",
-        "description": "Active planning lanes"
+      "products": {
+        "label": "Planned Products",
+        "description": "Products with targets in this window"
       },
       "plannedUnits": {
         "label": "Planned Units",
-        "value": "860",
-        "description": "Placeholder weekly target"
+        "description": "Target quantity total in this window"
       },
       "window": {
         "label": "Window",
-        "value": "7d",
-        "description": "Rolling planning view"
+        "description": "Current editable date range"
       }
+    },
+    "bulk": {
+      "title": "Bulk entry",
+      "description": "Fill or update one product across an inclusive date range.",
+      "productPlaceholder": "Select product",
+      "quantityPlaceholder": "Qty",
+      "apply": "Apply"
     },
     "board": {
       "title": "Planning board",
-      "description": "Initial route shell for planner/admin access."
+      "description": "Editable target quantities from {{from}} to {{to}}.",
+      "loadingTitle": "Loading planning board",
+      "loadingDescription": "Fetching products and production plans for the selected window.",
+      "emptyProductsTitle": "No products available",
+      "emptyProductsDescription": "Create products before entering production targets.",
+      "cellLabel": "{{product}} target for {{date}}"
+    },
+    "actuals": {
+      "title": "Plan vs actual",
+      "description": "Variance is actual snapshot quantity minus planned quantity.",
+      "loadingTitle": "Loading variance",
+      "loadingDescription": "Calling /reports/plan-vs-actual for this planning window.",
+      "emptyTitle": "No variance rows",
+      "emptyDescription": "Enter targets and save matching snapshots to see variance."
     },
     "rows": {
       "lineA": {
@@ -300,18 +491,6 @@
         "sku": "SKU-1001",
         "target": "420 units",
         "status": "Ready"
-      },
-      "lineB": {
-        "line": "Line B",
-        "sku": "SKU-1002",
-        "target": "180 units",
-        "status": "Review"
-      },
-      "lineC": {
-        "line": "Line C",
-        "sku": "SKU-1003",
-        "target": "260 units",
-        "status": "Queued"
       }
     }
   },

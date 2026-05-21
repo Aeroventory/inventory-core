@@ -1,5 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel
+
+from pydantic import BaseModel, Field
+
+from schemas.media import MediaAssetResponse
 
 
 class ProductCreate(BaseModel):
@@ -10,6 +13,7 @@ class ProductCreate(BaseModel):
     location_site: Optional[str] = None
     location_aisle: Optional[str] = None
     location_rack: Optional[str] = None
+    raw_materials: Optional[str] = None
 
 
 class ProductResponse(BaseModel):
@@ -21,6 +25,9 @@ class ProductResponse(BaseModel):
     location_site: Optional[str] = None
     location_aisle: Optional[str] = None
     location_rack: Optional[str] = None
+    raw_materials: Optional[str] = None
+    images: list[MediaAssetResponse] = Field(default_factory=list)
+    primary_image: Optional[MediaAssetResponse] = None
 
     class Config:
         from_attributes = True
@@ -34,3 +41,4 @@ class ProductUpdate(BaseModel):
     location_site: Optional[str] = None
     location_aisle: Optional[str] = None
     location_rack: Optional[str] = None
+    raw_materials: Optional[str] = None

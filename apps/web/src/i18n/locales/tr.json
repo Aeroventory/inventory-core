@@ -27,6 +27,7 @@
       "deleteProduct": "Ürünü sil",
       "editProduct": "Ürünü düzenle",
       "logOut": "Çıkış yap",
+      "manageImages": "Görselleri yönet",
       "openNavigation": "Navigasyonu aç",
       "refreshApiHealth": "API durumunu yenile",
       "removeItem": "Öğeyi kaldır"
@@ -50,6 +51,8 @@
     "formats": {
       "currencyTry": "₺{{value}}",
       "compactPair": "{{first}} · {{second}}",
+      "boxes_one": "{{count}} kutu",
+      "boxes_other": "{{count}} kutu",
       "itemRows_one": "{{count}} ürün satırı",
       "itemRows_other": "{{count}} ürün satırı",
       "productId": "Ürün #{{id}}",
@@ -62,18 +65,26 @@
     "labels": {
       "actions": "İşlemler",
       "aisle": "Koridor",
+      "box": "Kutu",
       "confidence": "Güven",
+      "actual": "Gerçekleşen",
+      "date": "Tarih",
+      "delta": "Fark",
+      "image": "Görsel",
       "line": "Hat",
       "location": "Konum",
+      "planned": "Planlanan",
       "product": "Ürün",
       "quantity": "Miktar",
       "rack": "Raf",
+      "rawMaterials": "Ham Maddeler",
       "schemaFields": "Şema Alanları",
       "site": "Tesis",
       "sku": "SKU",
       "status": "Durum",
       "target": "Hedef",
-      "value": "Değer"
+      "value": "Değer",
+      "variance": "Sapma"
     },
     "roles": {
       "admin": "yönetici",
@@ -117,6 +128,14 @@
       "label": "Sayım Kayıtları",
       "description": "Görsel ve envanter sayım kayıtları"
     },
+    "gallery": {
+      "label": "Galeri",
+      "description": "Yeniden kullanılabilir ürün ve sayım görselleri"
+    },
+    "dailyReport": {
+      "label": "Günlük Karşılaştırma",
+      "description": "Tarihe göre stok farkları"
+    },
     "productionPlan": {
       "label": "Üretim Planı",
       "description": "Planlama çalışma alanı"
@@ -144,21 +163,26 @@
       "loadData": "Gösterge paneli verileri API'den yüklenemedi."
     },
     "hero": {
-      "title": "Envanter iş akışı konsolu",
-      "description": "Postman açmadan ürünleri, sayım kayıtlarını, yüklemeleri ve API durumunu test etmek için hafif, endpoint odaklı bir çalışma alanı."
+      "title": "Envanter gösterge paneli",
+      "description": "Güncel stok, günlük hareket ve sonraki operasyon kısayolları tek görünümde."
     },
     "metrics": {
       "products": {
         "label": "Ürünler",
-        "description": "/products üzerinden dönen satırlar"
+        "description": "Son stok özetindeki ürünler"
       },
       "latestUnits": {
         "label": "Son Birim Sayısı",
-        "description": "En yeni sayım kaydındaki toplam miktar"
+        "description": "/reports/stock-summary içindeki toplam birim"
+      },
+      "latestSnapshotDate": {
+        "label": "Son Sayım",
+        "description": "Sayım #{{id}}",
+        "empty": "Henüz sayım özeti yok"
       },
       "snapshots": {
         "label": "Sayım Kayıtları",
-        "description": "Kaydedilmiş görsel destekli envanter çalışmaları"
+        "description": "Son kaydedilen envanter çalışmaları"
       },
       "dbStatus": {
         "label": "DB Durumu"
@@ -170,16 +194,39 @@
       "browseProducts": "Ürünlere göz at",
       "uploadImageAndSaveSnapshot": "Görsel yükle ve sayım kaydı oluştur",
       "reviewSnapshots": "Sayım kayıtlarını incele",
+      "openDailyComparison": "Günlük karşılaştırmayı aç",
       "openProductionPlan": "Üretim planını aç",
       "openKitchen": "Mutfak tasarım sözleşmesini aç",
       "title": "İş akışı kısayolları",
-      "description": "Konsoldan ayrılmadan test döngüsü içinde ilerleyin."
+      "description": "Envanter iş akışı için büyük ve doğrudan bağlantılar."
     },
     "latestSnapshot": {
       "title": "Son sayım kaydı",
       "description": "Görsel iş akışının faydalı envanter satırları üretip üretmediğini hızlıca kontrol edin.",
       "noSnapshotsTitle": "Henüz sayım kaydı yok",
       "noSnapshotsDescription": "En son algılanan envanteri burada görmek için bir görsel yükleyin ve sayım kaydı oluşturun."
+    },
+    "dailyDelta": {
+      "title": "Günlük fark",
+      "description": "Son stok özeti tarihindeki en yüksek hareketler.",
+      "descriptionWithDate": "{{date}}, {{baseline}} ile karşılaştırıldı",
+      "openReport": "Raporu aç",
+      "loadingTitle": "Günlük hareket yükleniyor",
+      "loadingDescription": "Son sayım tarihi için günlük fark raporu çağrılıyor.",
+      "emptyTitle": "Fark bulunamadı",
+      "emptyDescription": "Stok hareketlerini görmek için karşılaştırılabilir tarihlerde sayım kaydı oluşturun.",
+      "gainers": "En çok artanlar",
+      "losers": "En çok azalanlar",
+      "noGainers": "Bu tarihte artış yok.",
+      "noLosers": "Bu tarihte azalış yok."
+    },
+    "recentSnapshots": {
+      "title": "Son sayım kayıtları",
+      "description": "Bir sayımın günlük karşılaştırmasını tek tıkla açın.",
+      "loadingTitle": "Sayım kayıtları yükleniyor",
+      "loadingDescription": "Son kaydedilen sayım çalışmaları alınıyor.",
+      "emptyTitle": "Henüz sayım kaydı yok",
+      "emptyDescription": "Hızlı bağlantıları görmek için bir sayım kaydı oluşturun."
     }
   },
   "products": {
@@ -193,18 +240,22 @@
       "invalidValue": "Değer geçerli bir sayı olmalıdır.",
       "create": "Ürün oluşturulamadı.",
       "update": "Ürün güncellenemedi.",
+      "updateImages": "Ürün görselleri güncellenemedi.",
       "delete": "Ürün silinemedi."
     },
     "create": {
       "title": "Ürün oluştur",
       "description": "Zorunlu SKU ve isteğe bağlı konum alanları dahil olmak üzere backend ürün şemasıyla envanter satırları oluşturun.",
+      "galleryTitle": "Ürün görselleri",
+      "galleryDescription": "Bu ürünü oluşturmadan önce görsel yükleyin veya seçin.",
       "placeholders": {
         "name": "Ürün adı",
         "sku": "SKU",
         "value": "Değer",
         "site": "Tesis",
         "aisle": "Koridor",
-        "rack": "Raf"
+        "rack": "Raf",
+        "rawMaterials": "Ham maddeler"
       }
     },
     "table": {
@@ -214,32 +265,73 @@
       "loadingDescription": "GET /products çağrılıyor ve API yanıtı bekleniyor.",
       "emptyTitle": "Ürün bulunamadı",
       "emptyDescription": "Burada satırları görmek için bir ürün oluşturun veya arama filtresini temizleyin.",
-      "locationPending": "Konum beklemede"
+      "locationPending": "Konum beklemede",
+      "rawMaterialsPending": "Ham madde beklemede"
+    },
+    "gallery": {
+      "title": "{{product}} görselleri",
+      "description": "Galeri görsellerini bu ürüne bağlayın ve ürün tablolarında kullanılan ana görseli seçin.",
+      "selectorDescription": "Yeni ürün fotoğrafları yükleyin veya mevcut galeriden seçin."
+    }
+  },
+  "gallery": {
+    "badge": "Medya Kütüphanesi",
+    "pageTitle": "Galeri",
+    "pageDescription": "Yeniden kullanılabilir görseller yükleyin ve ürün veya sayım medya kütüphanesini inceleyin.",
+    "title": "Görsel galerisi",
+    "uploadTitle": "Görsel yükle",
+    "uploadDescription": "Görseller yerel galeri deposuna kaydedilir ve ürünlere veya sayımlara bağlanabilir.",
+    "libraryTitle": "Galeri kütüphanesi",
+    "filePondLabel": "Görselleri bırakın veya <span class=\"filepond--label-action\">göz atın</span>",
+    "upload": "Görselleri yükle",
+    "searchPlaceholder": "Görsellerde ara...",
+    "selectedCount_one": "{{count}} görsel seçildi",
+    "selectedCount_other": "{{count}} görsel seçildi",
+    "selected": "seçildi",
+    "available": "uygun",
+    "makePrimary": "Ana görsel yap",
+    "loadingTitle": "Galeri yükleniyor",
+    "loadingDescription": "Yeniden kullanılabilir yüklenmiş görseller alınıyor.",
+    "emptyTitle": "Görsel bulunamadı",
+    "emptyDescription": "Görsel yükleyin veya arama filtresini temizleyin.",
+    "errors": {
+      "load": "Galeri yüklenemedi.",
+      "upload": "Galeri görselleri yüklenemedi.",
+      "delete": "Görsel silinemedi. Hala bir ürüne veya sayım kaydına bağlı olabilir."
     }
   },
   "snapshots": {
     "page": {
       "badge": "Sayım Kayıtları API'si",
       "title": "Sayım Kayıtları",
-      "description": "Tek bir iş akışında görsel yükleyin, manuel sayım satırları oluşturun ve kayıtlı envanter geçmişini inceleyin."
+      "description": "Aktif envanter kutularını yönetin, mevcut havuzu kaydedin ve sayım geçmişini tek akışta inceleyin."
     },
     "form": {
       "errors": {
         "loadProducts": "Ürünler yüklenemedi.",
         "uploadImage": "Görsel yüklenip kaydedilemedi.",
         "snapshotNameRequired": "Sayım kaydı adı zorunludur.",
+        "snapshotDateRequired": "Sayım tarihi zorunludur.",
         "uploadBeforeSave": "Sayım kaydını kaydetmeden önce bir görsel yükleyin.",
         "addAtLeastOneProduct": "Sayım kaydına en az bir ürün satırı ekleyin.",
         "save": "Sayım kaydı kaydedilemedi."
       },
-      "success_one": "\"{{name}}\" sayım kaydı {{count}} ürün satırıyla kaydedildi.",
-      "success_other": "\"{{name}}\" sayım kaydı {{count}} ürün satırıyla kaydedildi.",
-      "title": "Yeni sayım kaydı",
-      "description": "Bir görsel yükleyin, ürünleri seçin ve aynı API akışı üzerinden sayım kaydını oluşturun.",
+      "success_one": "\"{{name}}\" sayım kaydı {{count}} kutuyla kaydedildi.",
+      "success_other": "\"{{name}}\" sayım kaydı {{count}} kutuyla kaydedildi.",
+      "title": "Mevcut havuzu kaydet",
+      "description": "Aktif envanter kutularını zaman damgalı sayım kaydı olarak kaydedin. Manuel kayıt için görsel isteğe bağlıdır.",
       "snapshotName": "Sayım kaydı adı",
       "snapshotNamePlaceholder": "örn. Mayıs 2026 Sayımı",
+      "snapshotDate": "Sayım tarihi",
+      "snapshotSource": "Kaynak",
       "snapshotImage": "Sayım görseli",
       "filePondLabel": "Bir görsel bırakın veya <span class=\"filepond--label-action\">göz atın</span>",
+      "galleryTitle": "Sayım galerisi",
+      "galleryDescription": "Mevcut galeri görsellerini bu sayım kaydına bağlayın veya yeniden kullanılabilir bir toplu yükleme yapın.",
+      "poolCapture": {
+        "title": "Mevcut havuz kaydı",
+        "description": "Bu sayım kaydedildiğinde havuzdaki her aktif kutu kopyalanır. Sayımlar arasında aktif kalan kutular günlük fark sayılmaz."
+      },
       "addedItems": {
         "title": "Eklenen öğeler",
         "description": "Bu satırlar, sayım kaydı oluşturulduktan sonra /snapshots/items adresine POST edilecektir.",
@@ -256,43 +348,142 @@
         "qtyPlaceholder": "Miktar"
       }
     },
+    "boxes": {
+      "title": "Envanter kutuları",
+      "description": "Sayım kaydı almadan önce aktif kutu havuzunu yönetin.",
+      "errors": {
+        "load": "Envanter kutuları yüklenemedi.",
+        "invalid": "Ürün, miktar ve kutu tarihi seçin.",
+        "save": "Envanter kutusu kaydedilemedi.",
+        "remove": "Envanter kutusu kaldırılamadı."
+      },
+      "form": {
+        "boxCodePlaceholder": "Kutu kodu (isteğe bağlı)",
+        "productPlaceholder": "Ürün seç",
+        "quantityPlaceholder": "Miktar",
+        "selectedProduct": "Seçilen SKU {{sku}} · değer ₺{{value}}"
+      },
+      "status": {
+        "active": "Aktif",
+        "removed": "Kaldırıldı"
+      },
+      "loadingTitle": "Envanter kutuları yükleniyor",
+      "loadingDescription": "Aktif ve kaldırılmış kutu havuzu alınıyor.",
+      "emptyTitle": "Henüz kutu yok",
+      "emptyDescription": "Aktif havuza kutu ekleyin, ardından sayım kaydı alın."
+    },
+    "source": {
+      "manual": "Manuel",
+      "drone": "Drone"
+    },
     "list": {
       "error": "Sayım kayıtları API'den yüklenemedi.",
       "title": "Sayım geçmişi",
-      "description": "Görsel önizlemeleri, ürün satırları ve güven durumuna hazır rozetlerle kayıtlı envanter çalışmaları.",
+      "description": "Yakalanan kutular ve güven rozetleriyle kayıtlı envanter çalışmaları.",
+      "compare": "Karşılaştır",
       "searchPlaceholder": "Sayım kayıtlarında ara...",
       "loadingTitle": "Sayım kayıtları yükleniyor",
       "loadingDescription": "GET /snapshots çağrılıyor ve kayıtlı envanter çalışmaları bekleniyor.",
       "emptyTitle": "Sayım kaydı bulunamadı",
       "emptyDescription": "Görsel destekli çalışmaları burada görmek için bir sayım kaydı oluşturun veya arama filtresini temizleyin.",
-      "noRowsTitle": "Ürün satırı yok",
-      "noRowsDescription": "Bu sayım kaydı var, ancak hiçbir ürün eklenmemiş."
+      "noRowsTitle": "Yakalanan kutu yok",
+      "noRowsDescription": "Bu sayım kaydı var, ancak aktif kutu yakalanmamış."
     }
+  },
+  "reportsDaily": {
+    "badge": "Raporlar API'si",
+    "title": "Günlük Karşılaştırma",
+    "description": "Bir sayım tarihini önceki günle karşılaştırın ve ürün bazında hareketleri inceleyin.",
+    "dateLabel": "Karşılaştırma tarihi",
+    "errors": {
+      "load": "Günlük karşılaştırma raporu yüklenemedi."
+    },
+    "metrics": {
+      "increases": "Artışlar",
+      "decreases": "Azalışlar",
+      "unchanged": "Değişmeyen"
+    },
+    "table": {
+      "title": "Fark tablosu",
+      "description": "Seçilen gündeki son sayımı önceki günle karşılaştırmak için tarih seçin.",
+      "descriptionWithDates": "{{date}}, {{baseline}} ile karşılaştırıldı",
+      "yesterday": "Dün",
+      "today": "Bugün",
+      "added": "Eklenen",
+      "removed": "Kaldırılan",
+      "boxes": "Kutular",
+      "boxDetails": "Kutu detayları",
+      "noBoxChanges": "Kutu üyeliği değişmedi"
+    },
+    "status": {
+      "added": "Eklendi",
+      "consumed": "Tüketildi",
+      "unchanged": "Değişmedi"
+    },
+    "loadingTitle": "Karşılaştırma yükleniyor",
+    "loadingDescription": "Seçilen tarih için GET /reports/daily-delta çağrılıyor.",
+    "emptyTitle": "Bu tarihte sayım yok",
+    "emptyDescription": "{{date}} için kaydedilmiş sayım bulunamadı.",
+    "noRowsTitle": "Satır yok",
+    "noRowsDescription": "Rapor yüklendi, ancak ürün satırı içermiyor."
   },
   "productionPlan": {
     "badge": "Planlayıcı",
     "title": "Üretim Planı",
-    "description": "Envanter odaklı üretim çizelgelemesi için planlama çalışma alanı.",
+    "description": "Ürün ve tarihe göre hedef miktarları girin, ardından planı gerçekleşen sayım miktarlarıyla karşılaştırın.",
+    "errors": {
+      "load": "Üretim planlama verileri yüklenemedi.",
+      "saveCell": "Planlama hücresi kaydedilemedi.",
+      "invalidQuantity": "Miktar sıfır veya daha büyük bir tam sayı olmalıdır.",
+      "invalidRange": "Bir ürün ve geçerli bir tarih aralığı seçin.",
+      "bulk": "Toplu üretim planı uygulanamadı."
+    },
+    "view": {
+      "week": "Hafta",
+      "month": "Ay"
+    },
+    "actions": {
+      "previousWindow": "Önceki planlama penceresi",
+      "nextWindow": "Sonraki planlama penceresi",
+      "saving": "Kaydediliyor..."
+    },
     "metrics": {
-      "lines": {
-        "label": "Hatlar",
-        "value": "3",
-        "description": "Aktif planlama hatları"
+      "products": {
+        "label": "Planlanan Ürünler",
+        "description": "Bu pencerede hedefi olan ürünler"
       },
       "plannedUnits": {
         "label": "Planlanan Birimler",
-        "value": "860",
-        "description": "Yer tutucu haftalık hedef"
+        "description": "Bu penceredeki toplam hedef miktar"
       },
       "window": {
         "label": "Pencere",
-        "value": "7g",
-        "description": "Kayan planlama görünümü"
+        "description": "Geçerli düzenlenebilir tarih aralığı"
       }
+    },
+    "bulk": {
+      "title": "Toplu giriş",
+      "description": "Bir ürünü kapsayıcı tarih aralığında doldurun veya güncelleyin.",
+      "productPlaceholder": "Ürün seç",
+      "quantityPlaceholder": "Miktar",
+      "apply": "Uygula"
     },
     "board": {
       "title": "Planlama panosu",
-      "description": "Planlayıcı/yönetici erişimi için başlangıç ekranı."
+      "description": "{{from}} ile {{to}} arasındaki düzenlenebilir hedef miktarlar.",
+      "loadingTitle": "Planlama panosu yükleniyor",
+      "loadingDescription": "Seçilen pencere için ürünler ve üretim planları alınıyor.",
+      "emptyProductsTitle": "Kullanılabilir ürün yok",
+      "emptyProductsDescription": "Üretim hedefleri girmeden önce ürün oluşturun.",
+      "cellLabel": "{{product}} için {{date}} hedefi"
+    },
+    "actuals": {
+      "title": "Plan ve gerçekleşen",
+      "description": "Sapma, gerçekleşen sayım miktarı eksi planlanan miktardır.",
+      "loadingTitle": "Sapma yükleniyor",
+      "loadingDescription": "Bu planlama penceresi için /reports/plan-vs-actual çağrılıyor.",
+      "emptyTitle": "Sapma satırı yok",
+      "emptyDescription": "Sapmayı görmek için hedefler girin ve eşleşen sayım kayıtları oluşturun."
     },
     "rows": {
       "lineA": {
@@ -300,18 +491,6 @@
         "sku": "SKU-1001",
         "target": "420 adet",
         "status": "Hazır"
-      },
-      "lineB": {
-        "line": "Hat B",
-        "sku": "SKU-1002",
-        "target": "180 adet",
-        "status": "İnceleme"
-      },
-      "lineC": {
-        "line": "Hat C",
-        "sku": "SKU-1003",
-        "target": "260 adet",
-        "status": "Sırada"
       }
     }
   },
