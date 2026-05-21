@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarDays, ImageIcon, RefreshCw, Search } from "lucide-react";
+import { ArrowRight, CalendarDays, ImageIcon, RefreshCw, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface SnapshotListProps {
 
 export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
   const { i18n, t } = useTranslation();
+  const navigate = useNavigate();
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,10 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
     return ordered.filter((snapshot) => {
       const haystack = [
         snapshot.name,
-        snapshot.file_path,
+        snapshot.file_path ?? "",
+        snapshot.primary_image?.original_filename ?? "",
+        ...(snapshot.images ?? []).map((image) => image.original_filename ?? image.file_path),
+        ...snapshot.items.map((item) => item.box_code),
         ...snapshot.items.map((item) => item.product.name),
       ]
         .join(" ")
@@ -91,15 +96,22 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
           <div className="space-y-4">
             {filteredSnapshots.map((snapshot) => {
               const totalQuantity = snapshot.items.reduce((sum, item) => sum + item.quantity, 0);
+              const snapshotDate = snapshot.created_at.slice(0, 10);
+              const primaryImagePath = snapshot.primary_image?.file_path ?? snapshot.file_path;
+              const galleryImages = snapshot.images ?? [];
               return (
                 <article key={snapshot.id} className="overflow-hidden rounded-2xl border border-[#D9E4DD] bg-white">
                   <div className="grid gap-4 p-4 lg:grid-cols-[160px_1fr]">
-                    <div className="h-40 overflow-hidden rounded-2xl border border-[#D9E4DD] bg-[#EEF4F0]">
-                      <img
-                        src={`${API_URL}/uploads/${snapshot.file_path}`}
-                        alt={snapshot.name}
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="grid h-40 place-items-center overflow-hidden rounded-2xl border border-[#D9E4DD] bg-[#EEF4F0]">
+                      {primaryImagePath ? (
+                        <img
+                          src={`${API_URL}/uploads/${primaryImagePath}`}
+                          alt={snapshot.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon size={28} className="text-[#5B6B63]" />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -111,10 +123,34 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge tone="blue">{t("common.formats.itemRows", { count: snapshot.items.length })}</Badge>
+                          <Badge tone={snapshot.is_manual ? "purple" : "blue"}>
+                            {snapshot.is_manual ? t("snapshots.source.manual") : t("snapshots.source.drone")}
+                          </Badge>
+                          {galleryImages.length > 0 && (
+                            <Badge tone="green">{t("gallery.selectedCount", { count: galleryImages.length })}</Badge>
+                          )}
+                          <Badge tone="blue">{t("common.formats.boxes", { count: snapshot.items.length })}</Badge>
                           <Badge tone="green">{t("common.formats.units", { count: totalQuantity })}</Badge>
+                          <Button variant="soft" size="sm" onClick={() => navigate(`/reports/daily?date=${snapshotDate}`)}>
+                            {t("snapshots.list.compare")}
+                            <ArrowRight size={14} />
+                          </Button>
                         </div>
                       </div>
+
+                      {galleryImages.length > 1 && (
+                        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                          {galleryImages.map((image) => (
+                            <div key={image.id} className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[#D9E4DD] bg-[#EEF4F0]">
+                              <img
+                                src={`${API_URL}/uploads/${image.file_path}`}
+                                alt={image.original_filename || snapshot.name}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {snapshot.items.length === 0 ? (
                         <EmptyState icon={ImageIcon} title={t("snapshots.list.noRowsTitle")} description={t("snapshots.list.noRowsDescription")} className="mt-4 min-h-[120px]" />
@@ -123,7 +159,14 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                           <table className="w-full min-w-[640px] border-separate border-spacing-0 text-left text-sm">
                             <thead>
                               <tr className="bg-[#F7FAF8] text-xs font-medium uppercase text-[#5B6B63]">
-                                {[t("common.labels.product"), t("common.labels.sku"), t("common.labels.quantity"), t("common.labels.confidence"), t("common.labels.value")].map((heading) => (
+                                {[
+                                  t("common.labels.box"),
+                                  t("common.labels.product"),
+                                  t("common.labels.date"),
+                                  t("common.labels.quantity"),
+                                  t("common.labels.confidence"),
+                                  t("common.labels.value"),
+                                ].map((heading) => (
                                   <th key={heading} className="border-b border-[#D9E4DD] px-3 py-2">
                                     {heading}
                                   </th>
@@ -133,8 +176,14 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                             <tbody>
                               {snapshot.items.map((item) => (
                                 <tr key={item.id} className="hover:bg-[#F7FAF8]">
-                                  <td className="border-b border-[#D9E4DD] px-3 py-2 font-semibold text-[#10231B]">{item.product.name}</td>
-                                  <td className="border-b border-[#D9E4DD] px-3 py-2 text-[#5B6B63]">{item.product.sku || t("common.states.pending")}</td>
+                                  <td className="border-b border-[#D9E4DD] px-3 py-2 font-semibold text-[#10231B]">{item.box_code}</td>
+                                  <td className="border-b border-[#D9E4DD] px-3 py-2">
+                                    <p className="font-semibold text-[#10231B]">{item.product.name}</p>
+                                    <p className="text-xs text-[#5B6B63]">{item.product.sku || t("common.states.pending")}</p>
+                                  </td>
+                                  <td className="border-b border-[#D9E4DD] px-3 py-2 text-[#5B6B63]">
+                                    {new Date(`${item.box_date}T00:00:00`).toLocaleDateString(i18n.resolvedLanguage)}
+                                  </td>
                                   <td className="border-b border-[#D9E4DD] px-3 py-2">
                                     <Badge tone="green">{t("common.badges.quantity", { count: item.quantity })}</Badge>
                                   </td>

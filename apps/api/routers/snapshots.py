@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from core.security import get_current_user, require_admin
 from db.session import get_db
+from schemas.media import MediaAttachmentUpdate
 from schemas.inventory_snapshot import (
     SnapshotCreate,
     SnapshotResponse,
@@ -13,6 +14,7 @@ from schemas.inventory_snapshot import (
     SnapshotItemUpdate,
     SnapshotItemResponse,
 )
+from services.media_service import replace_snapshot_media
 from services.file_service import upload_file, save_file
 from services.snapshot_services import (
     get_all_snapshots,
@@ -86,6 +88,19 @@ def add_snapshot(
     _admin_user=Depends(require_admin),
 ):
     return create_snapshot(db, snapshot_in)
+
+
+@router.put("/{snapshot_id}/media", response_model=SnapshotResponse)
+def edit_snapshot_media(
+    snapshot_id: int,
+    media_in: MediaAttachmentUpdate,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
+    snapshot = replace_snapshot_media(db, snapshot_id, media_in)
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    return snapshot
 
 
 @router.delete("/{snapshot_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -10,9 +10,12 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
 from db.session import Base, get_db
 import models.product
+import models.inventory_box
 import models.inventory_snapshot
 import models.inventory_snapshot_item
 import models.user
+import models.production_plan
+import models.media
 from main import app
 
 

@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 
 from core.security import get_current_user, require_admin
 from db.session import get_db
+from schemas.media import MediaAttachmentUpdate
 from schemas.product import ProductCreate, ProductUpdate, ProductResponse
+from services.media_service import replace_product_media
 from services.product_service import get_all_products, create_product, update_product, delete_product
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -33,6 +35,19 @@ def edit_product(
     _admin_user=Depends(require_admin),
 ):
     product = update_product(db, product_id, product_in)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+@router.put("/{product_id}/media", response_model=ProductResponse)
+def edit_product_media(
+    product_id: int,
+    media_in: MediaAttachmentUpdate,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
+    product = replace_product_media(db, product_id, media_in)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product

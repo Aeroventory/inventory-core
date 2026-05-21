@@ -22,6 +22,14 @@ export const navItems = [
   { id: "products", labelKey: "nav.products.label", path: "/products", descriptionKey: "nav.products.description" },
   { id: "snapshots", labelKey: "nav.snapshots.label", path: "/snapshots", descriptionKey: "nav.snapshots.description" },
   {
+    id: "gallery",
+    labelKey: "nav.gallery.label",
+    path: "/gallery",
+    descriptionKey: "nav.gallery.description",
+    allowedRoles: ["admin"] satisfies readonly UserRole[],
+  },
+  { id: "dailyReport", labelKey: "nav.dailyReport.label", path: "/reports/daily", descriptionKey: "nav.dailyReport.description" },
+  {
     id: "productionPlan",
     labelKey: "nav.productionPlan.label",
     path: "/production-plan",

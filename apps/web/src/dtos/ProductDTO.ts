@@ -6,6 +6,7 @@ export interface ProductDTO {
   location_site?: string;
   location_aisle?: string;
   location_rack?: string;
+  raw_materials?: string;
 }
 
 export interface ProductUpdateDTO {
@@ -16,4 +17,5 @@ export interface ProductUpdateDTO {
   location_site?: string | null;
   location_aisle?: string | null;
   location_rack?: string | null;
+  raw_materials?: string | null;
 }

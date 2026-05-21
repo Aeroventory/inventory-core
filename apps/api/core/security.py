@@ -77,3 +77,12 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
             detail="Not enough permissions",
         )
     return current_user
+
+
+def require_planner_or_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role not in {UserRole.admin, UserRole.planner}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions",
+        )
+    return current_user

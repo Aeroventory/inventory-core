@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Edit3,
+  ImageIcon,
+  Images,
   MapPin,
   Package,
   Plus,
@@ -16,11 +18,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import GallerySelector from "@/components/GallerySelector";
 import { Input } from "@/components/ui/input";
 import { ProductDTO, ProductUpdateDTO } from "@/dtos/ProductDTO";
+import { MediaAsset } from "@/models/Media";
 import { Product } from "@/models/Product";
 import { createProduct, deleteProduct, getProducts, updateProduct } from "@/services/product-endpoints";
+import { updateProductMedia } from "@/services/media-endpoints";
 import { useAuthStore } from "@/stores/auth-store";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8003";
 
 const emptyDraft: ProductDTO = {
   name: "",
@@ -29,6 +36,7 @@ const emptyDraft: ProductDTO = {
   location_site: "",
   location_aisle: "",
   location_rack: "",
+  raw_materials: "",
 };
 
 function productLocation(product: Product | ProductDTO) {
@@ -47,6 +55,7 @@ function toEditDraft(product: Product): ProductUpdateDTO {
     location_site: product.location_site || "",
     location_aisle: product.location_aisle || "",
     location_rack: product.location_rack || "",
+    raw_materials: product.raw_materials || "",
   };
 }
 
@@ -56,13 +65,26 @@ function cleanDraft(draft: ProductDTO | ProductUpdateDTO) {
   ) as ProductDTO | ProductUpdateDTO;
 }
 
+function mediaAttachments(images: MediaAsset[], primaryImageId: number | null) {
+  return images.map((image, index) => ({
+    media_asset_id: image.id,
+    sort_order: index,
+    is_primary: image.id === primaryImageId,
+  }));
+}
+
 export default function ProductsPage() {
   const { t } = useTranslation();
   const isAdmin = useAuthStore((state) => state.isAdmin());
   const [products, setProducts] = useState<Product[]>([]);
   const [draft, setDraft] = useState<ProductDTO>(emptyDraft);
+  const [createImages, setCreateImages] = useState<MediaAsset[]>([]);
+  const [createPrimaryImageId, setCreatePrimaryImageId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<ProductUpdateDTO>({});
+  const [mediaProduct, setMediaProduct] = useState<Product | null>(null);
+  const [mediaDraftImages, setMediaDraftImages] = useState<MediaAsset[]>([]);
+  const [mediaDraftPrimaryId, setMediaDraftPrimaryId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,6 +113,8 @@ export default function ProductsPage() {
         product.location_site,
         product.location_aisle,
         product.location_rack,
+        product.raw_materials,
+        product.primary_image?.original_filename,
       ]
         .filter(Boolean)
         .join(" ")
@@ -99,7 +123,7 @@ export default function ProductsPage() {
     });
   }, [products, query]);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const cleaned = cleanDraft(draft) as ProductDTO;
     const value = Number(cleaned.value);
     if (!cleaned.name) {
@@ -117,13 +141,22 @@ export default function ProductsPage() {
 
     setSaving(true);
     setError(null);
-    createProduct({ ...cleaned, value })
-      .then(() => {
-        setDraft(emptyDraft);
-        fetchProducts();
-      })
-      .catch(() => setError(t("products.errors.create")))
-      .finally(() => setSaving(false));
+    try {
+      const productRes = await createProduct({ ...cleaned, value });
+      if (createImages.length > 0) {
+        await updateProductMedia(productRes.data.id, {
+          attachments: mediaAttachments(createImages, createPrimaryImageId),
+        });
+      }
+      setDraft(emptyDraft);
+      setCreateImages([]);
+      setCreatePrimaryImageId(null);
+      fetchProducts();
+    } catch {
+      setError(t("products.errors.create"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEditing = (product: Product) => {
@@ -171,19 +204,51 @@ export default function ProductsPage() {
       .catch(() => setError(t("products.errors.delete")));
   };
 
+  const startMediaEditing = (product: Product) => {
+    setMediaProduct(product);
+    const images = product.images ?? [];
+    setMediaDraftImages(images);
+    setMediaDraftPrimaryId(product.primary_image?.id ?? images[0]?.id ?? null);
+  };
+
+  const cancelMediaEditing = () => {
+    setMediaProduct(null);
+    setMediaDraftImages([]);
+    setMediaDraftPrimaryId(null);
+  };
+
+  const handleMediaSave = () => {
+    if (!mediaProduct) return;
+    setSaving(true);
+    setError(null);
+    updateProductMedia(mediaProduct.id, {
+      attachments: mediaAttachments(mediaDraftImages, mediaDraftPrimaryId),
+    })
+      .then((res) => {
+        setProducts((current) => current.map((product) => (product.id === res.data.id ? res.data : product)));
+        cancelMediaEditing();
+      })
+      .catch(() => setError(t("products.errors.updateImages")))
+      .finally(() => setSaving(false));
+  };
+
   const tableHeadings = isAdmin
     ? [
         t("common.labels.product"),
+        t("common.labels.image"),
         t("common.labels.sku"),
         t("common.labels.value"),
+        t("common.labels.rawMaterials"),
         t("common.labels.location"),
         t("common.labels.schemaFields"),
         t("common.labels.actions"),
       ]
     : [
         t("common.labels.product"),
+        t("common.labels.image"),
         t("common.labels.sku"),
         t("common.labels.value"),
+        t("common.labels.rawMaterials"),
         t("common.labels.location"),
         t("common.labels.schemaFields"),
       ];
@@ -218,8 +283,8 @@ export default function ProductsPage() {
               {t("products.create.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_1fr_auto]">
               <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder={t("products.create.placeholders.name")} />
               <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder={t("products.create.placeholders.sku")} />
               <Input
@@ -231,11 +296,22 @@ export default function ProductsPage() {
               <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder={t("products.create.placeholders.site")} />
               <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder={t("products.create.placeholders.aisle")} />
               <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder={t("products.create.placeholders.rack")} />
+              <Input value={draft.raw_materials} onChange={(event) => setDraft({ ...draft, raw_materials: event.target.value })} placeholder={t("products.create.placeholders.rawMaterials")} />
               <Button onClick={handleCreate} disabled={saving}>
                 <Plus size={16} />
                 {t("common.actions.add")}
               </Button>
             </div>
+            <GallerySelector
+              selectedImages={createImages}
+              primaryImageId={createPrimaryImageId}
+              onChange={(images, primaryImageId) => {
+                setCreateImages(images);
+                setCreatePrimaryImageId(primaryImageId);
+              }}
+              title={t("products.create.galleryTitle")}
+              description={t("products.create.galleryDescription")}
+            />
           </CardContent>
         </Card>
       )}
@@ -257,7 +333,7 @@ export default function ProductsPage() {
             <EmptyState icon={Package} title={t("products.table.emptyTitle")} description={t("products.table.emptyDescription")} />
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-[#D9E4DD]">
-              <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm">
+              <table className="w-full min-w-[1260px] border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr className="bg-[#F7FAF8] text-xs font-medium uppercase text-[#5B6B63]">
                     {tableHeadings.map((heading) => (
@@ -271,6 +347,7 @@ export default function ProductsPage() {
                   {filteredProducts.map((product) => {
                     const isEditing = isAdmin && editingId === product.id;
                     const location = productLocation(product);
+                    const thumbnail = product.primary_image;
                     return (
                       <tr key={product.id} className="hover:bg-[#F7FAF8]">
                         <td className="border-b border-[#D9E4DD] px-4 py-3">
@@ -282,6 +359,19 @@ export default function ProductsPage() {
                               <p className="text-xs text-[#5B6B63]">{t("common.formats.productId", { id: product.id })}</p>
                             </div>
                           )}
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          <div className="grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-[#D9E4DD] bg-[#EEF4F0]">
+                            {thumbnail ? (
+                              <img
+                                src={`${API_URL}/uploads/${thumbnail.file_path}`}
+                                alt={thumbnail.original_filename || product.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon size={20} className="text-[#5B6B63]" />
+                            )}
+                          </div>
                         </td>
                         <td className="border-b border-[#D9E4DD] px-4 py-3">
                           {isEditing ? (
@@ -299,6 +389,15 @@ export default function ProductsPage() {
                             />
                           ) : (
                             <span className="font-semibold text-[#00684A]">{t("common.formats.currencyTry", { value: product.value })}</span>
+                          )}
+                        </td>
+                        <td className="border-b border-[#D9E4DD] px-4 py-3">
+                          {isEditing ? (
+                            <Input value={editDraft.raw_materials || ""} onChange={(event) => setEditDraft({ ...editDraft, raw_materials: event.target.value })} placeholder={t("products.create.placeholders.rawMaterials")} />
+                          ) : (
+                            <span className="line-clamp-2 text-[#5B6B63]">
+                              {product.raw_materials || t("products.table.rawMaterialsPending")}
+                            </span>
                           )}
                         </td>
                         <td className="border-b border-[#D9E4DD] px-4 py-3">
@@ -340,6 +439,9 @@ export default function ProductsPage() {
                               </div>
                             ) : (
                               <div className="flex gap-2">
+                                <Button size="icon" variant="secondary" aria-label={t("common.aria.manageImages")} onClick={() => startMediaEditing(product)}>
+                                  <Images size={15} />
+                                </Button>
                                 <Button size="icon" variant="secondary" aria-label={t("common.aria.editProduct")} onClick={() => startEditing(product)}>
                                   <Edit3 size={15} />
                                 </Button>
@@ -359,6 +461,38 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && mediaProduct && (
+        <Card>
+          <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>{t("products.gallery.title", { product: mediaProduct.name })}</CardTitle>
+              <CardDescription>{t("products.gallery.description")}</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={cancelMediaEditing}>
+                <X size={16} />
+                {t("common.actions.cancel")}
+              </Button>
+              <Button onClick={handleMediaSave} disabled={saving}>
+                <Save size={16} />
+                {t("common.actions.save")}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <GallerySelector
+              selectedImages={mediaDraftImages}
+              primaryImageId={mediaDraftPrimaryId}
+              onChange={(images, primaryImageId) => {
+                setMediaDraftImages(images);
+                setMediaDraftPrimaryId(primaryImageId);
+              }}
+              description={t("products.gallery.selectorDescription")}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

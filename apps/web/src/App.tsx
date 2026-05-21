@@ -2,10 +2,12 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 
-import DashboardPage from "@/components/DashboardPage";
+import DailyComparisonPage from "@/components/DailyComparisonPage";
+import DashboardPage from "@/components/DashboardOverviewPage";
+import GalleryPage from "@/components/GalleryPage";
 import KitchenPage from "@/components/KitchenPage";
 import LoginPage from "@/components/LoginPage";
-import ProductionPlanPage from "@/components/ProductionPlanPage";
+import ProductionPlanPage from "@/components/ProductionPlanningWorkspace";
 import ProtectedLayout, { ProtectedOutletContext } from "@/components/ProtectedLayout";
 import ProductsPage from "@/components/ProductsPage";
 import SnapshotsPage from "@/components/SnapshotsPage";
@@ -98,6 +100,15 @@ function App() {
           <Route index element={<DashboardRoute />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/snapshots" element={<SnapshotsPage />} />
+          <Route
+            path="/gallery"
+            element={
+              <RequireAdmin>
+                <GalleryPage />
+              </RequireAdmin>
+            }
+          />
+          <Route path="/reports/daily" element={<DailyComparisonPage />} />
           <Route
             path="/production-plan"
             element={
