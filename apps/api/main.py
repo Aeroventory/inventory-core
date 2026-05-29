@@ -10,6 +10,7 @@ from sqlalchemy.exc import OperationalError
 from core.config import settings
 from db.session import engine
 from routers.auth import router as auth_router
+from routers.drone import close_drone_runtime, router as drone_router
 from routers.inventory_boxes import router as inventory_boxes_router
 from routers.media import router as media_router
 from routers.products import router as products_router
@@ -31,7 +32,10 @@ def check_db_connection() -> bool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    try:
+        yield
+    finally:
+        close_drone_runtime()
 
 
 app = FastAPI(
@@ -49,6 +53,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(drone_router)
 app.include_router(products_router)
 app.include_router(inventory_boxes_router)
 app.include_router(files_router)
