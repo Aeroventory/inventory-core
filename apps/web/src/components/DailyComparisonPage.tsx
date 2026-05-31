@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BarChart3, CalendarDays, RefreshCw } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,9 @@ export default function DailyComparisonPage() {
       if (status === 404) {
         setNotFound(true);
       } else {
-        setError(t("reportsDaily.errors.load"));
+        const message = t("reportsDaily.errors.load");
+        setError(message);
+        toast.error(message);
       }
     } finally {
       setLoading(false);

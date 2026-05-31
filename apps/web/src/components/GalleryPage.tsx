@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ImageIcon, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
+import { toast } from "react-toastify";
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
@@ -46,7 +47,11 @@ export default function GalleryPage() {
     setError(null);
     getMediaAssets()
       .then((res) => setAssets(res.data))
-      .catch(() => setError(t("gallery.errors.load")))
+      .catch(() => {
+        const message = t("gallery.errors.load");
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -63,8 +68,11 @@ export default function GalleryPage() {
       setAssets((current) => [...res.data, ...current]);
       setPendingFiles([]);
       setPondKey((value) => value + 1);
+      toast.success(t("gallery.success.upload", { count: res.data.length }));
     } catch {
-      setError(t("gallery.errors.upload"));
+      const message = t("gallery.errors.upload");
+      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -76,8 +84,11 @@ export default function GalleryPage() {
     try {
       await deleteMediaAsset(assetId);
       setAssets((current) => current.filter((asset) => asset.id !== assetId));
+      toast.success(t("gallery.success.delete"));
     } catch {
-      setError(t("gallery.errors.delete"));
+      const message = t("gallery.errors.delete");
+      setError(message);
+      toast.error(message);
     } finally {
       setDeletingId(null);
     }
@@ -108,7 +119,7 @@ export default function GalleryPage() {
           <CardTitle>{t("gallery.uploadTitle")}</CardTitle>
           <CardDescription>{t("gallery.uploadDescription")}</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+        <CardContent className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <FilePond
             key={pondKey}
             allowMultiple

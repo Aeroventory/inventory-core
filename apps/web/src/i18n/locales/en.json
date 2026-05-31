@@ -14,6 +14,7 @@
       "newSnapshot": "New Snapshot",
       "refresh": "Refresh",
       "refreshProducts": "Refresh products",
+      "restore": "Restore",
       "save": "Save",
       "saveSnapshot": "Save Snapshot",
       "savingSnapshot": "Saving snapshot...",
@@ -243,6 +244,12 @@
       "updateImages": "Failed to update product images.",
       "delete": "Failed to delete product."
     },
+    "success": {
+      "create": "Product \"{{name}}\" created.",
+      "update": "Product \"{{name}}\" updated.",
+      "updateImages": "Images updated for \"{{name}}\".",
+      "delete": "Product \"{{name}}\" deleted."
+    },
     "create": {
       "title": "Create product",
       "description": "Create inventory rows with the backend product schema, including required SKU and optional location fields.",
@@ -298,6 +305,11 @@
       "load": "Failed to load the gallery.",
       "upload": "Failed to upload gallery images.",
       "delete": "Failed to delete the image. It may still be attached to a product or snapshot."
+    },
+    "success": {
+      "upload_one": "{{count}} image uploaded.",
+      "upload_other": "{{count}} images uploaded.",
+      "delete": "Image deleted."
     }
   },
   "snapshots": {
@@ -318,6 +330,7 @@
       },
       "success_one": "Snapshot \"{{name}}\" captured with {{count}} box.",
       "success_other": "Snapshot \"{{name}}\" captured with {{count}} boxes.",
+      "uploadSuccess": "Snapshot image uploaded.",
       "title": "Capture current pool",
       "description": "Save the current active inventory boxes as a timestamped snapshot. An image is optional for manual captures.",
       "snapshotName": "Snapshot name",
@@ -330,7 +343,7 @@
       "galleryDescription": "Attach existing gallery images to this snapshot or upload a reusable batch.",
       "poolCapture": {
         "title": "Current pool capture",
-        "description": "Saving this snapshot copies every active box from the pool. Boxes that remain active across snapshots do not count as daily delta."
+        "description": "Review the active pool below. Boxes marked for removal are removed when this snapshot is saved, then the remaining active boxes are captured."
       },
       "addedItems": {
         "title": "Added items",
@@ -348,14 +361,60 @@
         "qtyPlaceholder": "Qty"
       }
     },
+    "ai": {
+      "openButton": "AI Snapshot",
+      "title": "AI Snapshot",
+      "description": "Upload an image, review Gemini's JSON output, then sync the active box pool into a snapshot.",
+      "defaultName": "AI Snapshot {{date}}",
+      "namePlaceholder": "e.g. AI Count May 2026",
+      "previewAlt": "AI snapshot preview",
+      "emptyRows": "Upload an image and run analysis to review detected boxes.",
+      "unmatchedTitle": "Unmatched AI rows",
+      "removedTitle": "Active boxes missing from the AI result will be removed",
+      "rawJson": "Raw JSON output",
+      "unmatchedBadge": "{{count}} unmatched",
+      "removedBadge": "{{count}} to remove",
+      "success_one": "AI snapshot \"{{name}}\" created with {{count}} row.",
+      "success_other": "AI snapshot \"{{name}}\" created with {{count}} rows.",
+      "actions": {
+        "analyze": "Analyze image",
+        "analyzing": "Analyzing...",
+        "create": "Create AI Snapshot"
+      },
+      "productCreate": {
+        "action": "Create product",
+        "save": "Save product",
+        "creating": "Creating...",
+        "success": "Product \"{{name}}\" created and added to the review.",
+        "existingSkuUsed": "SKU {{sku}} already exists, so that product was added to the review."
+      },
+      "errors": {
+        "loadCatalog": "Failed to load products or active boxes.",
+        "imageRequired": "Upload an image before analyzing.",
+        "analyze": "Gemini could not analyze this image.",
+        "analyzeFirst": "Analyze an image before creating the snapshot.",
+        "reviewRows": "Every reviewed row needs a product and positive quantity.",
+        "stalePool": "Active boxes changed during review. Re-analyze the image and try again.",
+        "create": "Failed to create AI snapshot.",
+        "productFields": "Product name, SKU, and value are required.",
+        "productCreate": "Failed to create product from the AI row."
+      }
+    },
     "boxes": {
       "title": "Inventory boxes",
       "description": "Manage the active box pool before capturing snapshots.",
+      "markedForRemovalBadge_one": "{{count}} marked for removal",
+      "markedForRemovalBadge_other": "{{count}} marked for removal",
       "errors": {
         "load": "Failed to load inventory boxes.",
         "invalid": "Choose a product, quantity, and box date.",
         "save": "Failed to save inventory box.",
         "remove": "Failed to remove inventory box."
+      },
+      "success": {
+        "create": "Inventory box added.",
+        "update": "Inventory box updated.",
+        "remove": "Inventory box removed."
       },
       "form": {
         "boxCodePlaceholder": "Box code (optional)",
@@ -365,16 +424,17 @@
       },
       "status": {
         "active": "Active",
+        "markedForRemoval": "Marked for removal",
         "removed": "Removed"
       },
       "loadingTitle": "Loading inventory boxes",
-      "loadingDescription": "Fetching the active and removed box pool.",
+      "loadingDescription": "Fetching the active box pool.",
       "emptyTitle": "No boxes yet",
       "emptyDescription": "Add boxes to the active pool, then capture a snapshot."
     },
     "source": {
       "manual": "Manual",
-      "drone": "Drone"
+      "drone": "AI Vision"
     },
     "list": {
       "error": "Failed to load snapshots from the API.",
@@ -437,6 +497,11 @@
       "invalidQuantity": "Quantity must be a whole number of zero or more.",
       "invalidRange": "Choose a product and a valid date range.",
       "bulk": "Failed to apply the bulk production plan."
+    },
+    "success": {
+      "saveCell": "Planning cell saved.",
+      "deleteCell": "Planning cell cleared.",
+      "bulk": "Bulk production plan applied."
     },
     "view": {
       "week": "Week",

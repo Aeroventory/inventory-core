@@ -1,3 +1,5 @@
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 from models.media import ProductMediaAsset
@@ -16,9 +18,16 @@ def get_all_products(db: Session) -> list[Product]:
 
 
 def create_product(db: Session, product_in: ProductCreate) -> Product:
+    if db.query(Product).filter(Product.sku == product_in.sku).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="SKU already exists")
+
     product = Product(**product_in.model_dump())
     db.add(product)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="SKU already exists")
     return _product_query(db).filter(Product.id == product.id).first()
 
 

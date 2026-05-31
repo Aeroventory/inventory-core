@@ -2,14 +2,22 @@ from datetime import date, datetime
 from uuid import uuid4
 
 from sqlalchemy.orm import Session, joinedload
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from models.inventory_box import InventoryBox
 from models.inventory_snapshot import InventorySnapshot
 from models.inventory_snapshot_item import InventorySnapshotItem
 from models.media import ProductMediaAsset, SnapshotMediaAsset
 from models.product import Product
-from schemas.inventory_snapshot import SnapshotCreate, SnapshotItemCreate, SnapshotItemUpdate
+from schemas.inventory_snapshot import (
+    AiSnapshotAnalysisRow,
+    AiSnapshotBoxPreview,
+    AiSnapshotCreate,
+    SnapshotCreate,
+    SnapshotItemCreate,
+    SnapshotItemUpdate,
+)
+from services.file_service import save_file
 
 
 def _snapshot_created_at(snapshot_date: date | None) -> datetime:
@@ -21,6 +29,13 @@ def _snapshot_created_at(snapshot_date: date | None) -> datetime:
 def _generate_box_code(product: Product, box_date: date) -> str:
     sku = product.sku or f"PRODUCT-{product.id}"
     return f"{sku}-{box_date:%Y%m%d}-{uuid4().hex[:8].upper()}"
+
+
+def _normalize_box_code(box_code: str | None) -> str | None:
+    if box_code is None:
+        return None
+    normalized = box_code.strip()
+    return normalized or None
 
 
 def _snapshot_query(db: Session):
@@ -60,6 +75,182 @@ def _capture_active_boxes(
                 confidence_score=confidence_by_box_code.get(box.box_code),
             )
         )
+
+
+def _soft_remove_boxes(db: Session, box_ids: list[int]) -> None:
+    if not box_ids:
+        return
+
+    (
+        db.query(InventoryBox)
+        .filter(InventoryBox.id.in_(list(set(box_ids))), InventoryBox.is_active == True)
+        .update(
+            {
+                InventoryBox.is_active: False,
+                InventoryBox.removed_at: datetime.now(),
+            },
+            synchronize_session="fetch",
+        )
+    )
+
+
+def _active_boxes_query(db: Session):
+    return (
+        db.query(InventoryBox)
+        .options(joinedload(InventoryBox.product))
+        .filter(InventoryBox.is_active == True)
+        .order_by(InventoryBox.box_date, InventoryBox.id)
+    )
+
+
+def _box_preview(box: InventoryBox) -> AiSnapshotBoxPreview:
+    return AiSnapshotBoxPreview(
+        id=box.id,
+        box_code=box.box_code,
+        product_id=box.product_id,
+        product_name=box.product.name if box.product else "",
+        quantity=box.quantity,
+        box_date=box.box_date,
+    )
+
+
+def _reviewed_box_codes(rows: list[AiSnapshotAnalysisRow]) -> set[str]:
+    return {
+        box_code
+        for box_code in (_normalize_box_code(row.box_code) for row in rows)
+        if box_code is not None
+    }
+
+
+def get_ai_snapshot_active_box_previews(db: Session) -> list[AiSnapshotBoxPreview]:
+    return [_box_preview(box) for box in _active_boxes_query(db).all()]
+
+
+def get_ai_snapshot_removed_box_previews(
+    db: Session, rows: list[AiSnapshotAnalysisRow]
+) -> list[AiSnapshotBoxPreview]:
+    reviewed_codes = _reviewed_box_codes(rows)
+    return [
+        _box_preview(box)
+        for box in _active_boxes_query(db).all()
+        if box.box_code not in reviewed_codes
+    ]
+
+
+def _validate_ai_rows(db: Session, rows: list[AiSnapshotAnalysisRow]) -> dict[int, Product]:
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one reviewed AI row is required",
+        )
+
+    seen_codes: set[str] = set()
+    product_ids = {row.product_id for row in rows if row.product_id is not None}
+    products = (
+        db.query(Product)
+        .filter(Product.id.in_(product_ids))
+        .all()
+        if product_ids
+        else []
+    )
+    product_by_id = {product.id: product for product in products}
+
+    for row in rows:
+        if row.product_id is None or row.product_id not in product_by_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Every reviewed AI row must reference an existing product",
+            )
+        box_code = _normalize_box_code(row.box_code)
+        if box_code is None:
+            continue
+        if box_code in seen_codes:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Duplicate box code in reviewed AI rows: {box_code}",
+            )
+        seen_codes.add(box_code)
+
+    return product_by_id
+
+
+def _expected_removed_box_ids(db: Session, rows: list[AiSnapshotAnalysisRow]) -> set[int]:
+    reviewed_codes = _reviewed_box_codes(rows)
+    return {
+        box.id
+        for box in _active_boxes_query(db).all()
+        if box.box_code not in reviewed_codes
+    }
+
+
+def create_ai_snapshot(db: Session, snapshot_in: AiSnapshotCreate) -> InventorySnapshot:
+    product_by_id = _validate_ai_rows(db, snapshot_in.rows)
+    expected_removed_ids = _expected_removed_box_ids(db, snapshot_in.rows)
+    confirmed_removed_ids = set(snapshot_in.confirmed_removed_box_ids)
+
+    if expected_removed_ids != confirmed_removed_ids:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "message": "Active inventory changed during AI review",
+                "expected_removed_box_ids": sorted(expected_removed_ids),
+            },
+        )
+
+    file_path = save_file(snapshot_in.temp_filename, folder="snapshots")
+    confidence_by_box_code: dict[str, float | None] = {}
+
+    for row in snapshot_in.rows:
+        product = product_by_id[row.product_id]
+        box_date = row.box_date or snapshot_in.snapshot_date
+        box_code = _normalize_box_code(row.box_code) or _generate_box_code(
+            product, box_date
+        )
+        box = db.query(InventoryBox).filter(InventoryBox.box_code == box_code).first()
+        if box is None:
+            box = InventoryBox(
+                box_code=box_code,
+                product_id=product.id,
+                quantity=row.quantity,
+                box_date=box_date,
+                is_active=True,
+            )
+            db.add(box)
+        else:
+            box.product_id = product.id
+            box.quantity = row.quantity
+            box.box_date = box_date
+            box.is_active = True
+            box.removed_at = None
+        confidence_by_box_code[box_code] = row.confidence_score
+
+    if expected_removed_ids:
+        (
+            db.query(InventoryBox)
+            .filter(InventoryBox.id.in_(expected_removed_ids))
+            .update(
+                {
+                    InventoryBox.is_active: False,
+                    InventoryBox.removed_at: datetime.now(),
+                },
+                synchronize_session="fetch",
+            )
+        )
+
+    snapshot = InventorySnapshot(
+        name=snapshot_in.name,
+        file_path=file_path,
+        created_at=_snapshot_created_at(snapshot_in.snapshot_date),
+        is_manual=False,
+    )
+    db.add(snapshot)
+    db.flush()
+
+    _capture_active_boxes(db, snapshot, confidence_by_box_code)
+
+    db.commit()
+    db.refresh(snapshot)
+    return get_snapshot_by_id(db, snapshot.id)
 
 
 def _parse_detection_date(value, fallback: date) -> date:
@@ -149,6 +340,8 @@ def get_snapshot_by_id(db: Session, snapshot_id: int) -> InventorySnapshot | Non
 
 
 def create_snapshot(db: Session, snapshot_in: SnapshotCreate) -> InventorySnapshot:
+    _soft_remove_boxes(db, snapshot_in.removed_box_ids)
+
     snapshot = InventorySnapshot(
         name=snapshot_in.name,
         file_path=snapshot_in.file_path,

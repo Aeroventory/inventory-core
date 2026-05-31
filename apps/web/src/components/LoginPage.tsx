@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Boxes, LogIn } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +42,9 @@ export default function LoginPage() {
       await login(username.trim(), password);
       navigate(redirectTo, { replace: true });
     } catch {
-      setError(t("auth.error"));
+      const message = t("auth.error");
+      setError(message);
+      toast.error(message);
     }
   };
 

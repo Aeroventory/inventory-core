@@ -49,6 +49,8 @@ services:
       context: ../services/vision
       dockerfile: Dockerfile
     container_name: inventory-vision
+    env_file:
+      - ../.env
     ports:
       - "${VISION_PORT:-8001}:8001"
     volumes:

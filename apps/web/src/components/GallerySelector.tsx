@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, ImageIcon, Search, Star, UploadCloud, X } from "lucide-react";
+import { toast } from "react-toastify";
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
@@ -65,7 +66,11 @@ export default function GallerySelector({
     setError(null);
     getMediaAssets()
       .then((res) => setAssets(res.data))
-      .catch(() => setError(t("gallery.errors.load")))
+      .catch(() => {
+        const message = t("gallery.errors.load");
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -97,15 +102,18 @@ export default function GallerySelector({
       setSelected([...selectedImages, ...uploadedAssets], effectivePrimaryId ?? uploadedAssets[0]?.id ?? null);
       setPendingFiles([]);
       setPondKey((value) => value + 1);
+      toast.success(t("gallery.success.upload", { count: uploadedAssets.length }));
     } catch {
-      setError(t("gallery.errors.upload"));
+      const message = t("gallery.errors.upload");
+      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[#D9E4DD] bg-[#F7FAF8] p-4">
+    <div className="space-y-5 rounded-2xl border border-[#D9E4DD] bg-[#F7FAF8] p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="font-medium text-[#10231B]">{title ?? t("gallery.title")}</p>

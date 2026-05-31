@@ -10,6 +10,7 @@ import {
   Plus,
   RefreshCw,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,9 @@ export default function ProductionPlanningWorkspace() {
         setBulkDraft((draft) => ({ ...draft, product_id: String(productRes.data[0].id) }));
       }
     } catch {
-      setError(t("productionPlan.errors.load"));
+      const message = t("productionPlan.errors.load");
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -143,8 +146,11 @@ export default function ProductionPlanningWorkspace() {
       try {
         await deleteProductionPlan(existing.id);
         await fetchPlanningData();
+        toast.success(t("productionPlan.success.deleteCell"));
       } catch {
-        setError(t("productionPlan.errors.saveCell"));
+        const message = t("productionPlan.errors.saveCell");
+        setError(message);
+        toast.error(message);
       } finally {
         setSavingCell(null);
       }
@@ -153,7 +159,9 @@ export default function ProductionPlanningWorkspace() {
 
     const targetQuantity = Number(rawValue);
     if (!isWholeQuantity(targetQuantity)) {
-      setError(t("productionPlan.errors.invalidQuantity"));
+      const message = t("productionPlan.errors.invalidQuantity");
+      setError(message);
+      toast.error(message);
       setCellDrafts((drafts) => ({
         ...drafts,
         [key]: existing ? String(existing.target_quantity) : "",
@@ -172,8 +180,11 @@ export default function ProductionPlanningWorkspace() {
         await createProductionPlan({ product_id: productId, date, target_quantity: targetQuantity });
       }
       await fetchPlanningData();
+      toast.success(t("productionPlan.success.saveCell"));
     } catch {
-      setError(t("productionPlan.errors.saveCell"));
+      const message = t("productionPlan.errors.saveCell");
+      setError(message);
+      toast.error(message);
     } finally {
       setSavingCell(null);
     }
@@ -183,11 +194,15 @@ export default function ProductionPlanningWorkspace() {
     const productId = Number(bulkDraft.product_id);
     const targetQuantity = Number(bulkDraft.target_quantity);
     if (!productId || !bulkDraft.from || !bulkDraft.to || bulkDraft.from > bulkDraft.to) {
-      setError(t("productionPlan.errors.invalidRange"));
+      const message = t("productionPlan.errors.invalidRange");
+      setError(message);
+      toast.error(message);
       return;
     }
     if (!isWholeQuantity(targetQuantity)) {
-      setError(t("productionPlan.errors.invalidQuantity"));
+      const message = t("productionPlan.errors.invalidQuantity");
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -202,8 +217,11 @@ export default function ProductionPlanningWorkspace() {
       });
       setWindowStart(bulkDraft.from);
       await fetchPlanningData();
+      toast.success(t("productionPlan.success.bulk"));
     } catch {
-      setError(t("productionPlan.errors.bulk"));
+      const message = t("productionPlan.errors.bulk");
+      setError(message);
+      toast.error(message);
     } finally {
       setBulkSaving(false);
     }
