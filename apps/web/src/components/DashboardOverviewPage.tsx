@@ -13,6 +13,7 @@ import {
   UploadCloud,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -155,7 +156,9 @@ export default function DashboardOverviewPage({
     }
 
     if (summaryResult.status === "rejected" && snapshotResult.status === "rejected") {
-      setError(t("dashboard.errors.loadData"));
+      const message = t("dashboard.errors.loadData");
+      setError(message);
+      toast.error(message);
     }
 
     setLoading(false);

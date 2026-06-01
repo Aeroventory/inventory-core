@@ -14,6 +14,7 @@
       "newSnapshot": "Yeni Sayım Kaydı",
       "refresh": "Yenile",
       "refreshProducts": "Ürünleri yenile",
+      "restore": "Geri al",
       "save": "Kaydet",
       "saveSnapshot": "Sayım kaydını kaydet",
       "savingSnapshot": "Sayım kaydı kaydediliyor...",
@@ -247,6 +248,12 @@
       "updateImages": "Ürün görselleri güncellenemedi.",
       "delete": "Ürün silinemedi."
     },
+    "success": {
+      "create": "\"{{name}}\" ürünü oluşturuldu.",
+      "update": "\"{{name}}\" ürünü güncellendi.",
+      "updateImages": "\"{{name}}\" için görseller güncellendi.",
+      "delete": "\"{{name}}\" ürünü silindi."
+    },
     "create": {
       "title": "Ürün oluştur",
       "description": "Zorunlu SKU ve isteğe bağlı konum alanları dahil olmak üzere backend ürün şemasıyla envanter satırları oluşturun.",
@@ -302,6 +309,11 @@
       "load": "Galeri yüklenemedi.",
       "upload": "Galeri görselleri yüklenemedi.",
       "delete": "Görsel silinemedi. Hala bir ürüne veya sayım kaydına bağlı olabilir."
+    },
+    "success": {
+      "upload_one": "{{count}} görsel yüklendi.",
+      "upload_other": "{{count}} görsel yüklendi.",
+      "delete": "Görsel silindi."
     }
   },
   "snapshots": {
@@ -322,6 +334,7 @@
       },
       "success_one": "\"{{name}}\" sayım kaydı {{count}} kutuyla kaydedildi.",
       "success_other": "\"{{name}}\" sayım kaydı {{count}} kutuyla kaydedildi.",
+      "uploadSuccess": "Sayım görseli yüklendi.",
       "title": "Mevcut havuzu kaydet",
       "description": "Aktif envanter kutularını zaman damgalı sayım kaydı olarak kaydedin. Manuel kayıt için görsel isteğe bağlıdır.",
       "snapshotName": "Sayım kaydı adı",
@@ -334,7 +347,7 @@
       "galleryDescription": "Mevcut galeri görsellerini bu sayım kaydına bağlayın veya yeniden kullanılabilir bir toplu yükleme yapın.",
       "poolCapture": {
         "title": "Mevcut havuz kaydı",
-        "description": "Bu sayım kaydedildiğinde havuzdaki her aktif kutu kopyalanır. Sayımlar arasında aktif kalan kutular günlük fark sayılmaz."
+        "description": "Aşağıdaki aktif havuzu inceleyin. Kaldırılmak üzere işaretlenen kutular sayım kaydı kaydedildiğinde kaldırılır, ardından kalan aktif kutular kayda alınır."
       },
       "addedItems": {
         "title": "Eklenen öğeler",
@@ -352,14 +365,60 @@
         "qtyPlaceholder": "Miktar"
       }
     },
+    "ai": {
+      "openButton": "AI Sayım Kaydı",
+      "title": "AI Sayım Kaydı",
+      "description": "Bir görsel yükleyin, Gemini JSON çıktısını inceleyin, ardından aktif kutu havuzunu sayım kaydına senkronize edin.",
+      "defaultName": "AI Sayım Kaydı {{date}}",
+      "namePlaceholder": "örn. AI Mayıs 2026 Sayımı",
+      "previewAlt": "AI sayım görseli önizlemesi",
+      "emptyRows": "Algılanan kutuları incelemek için bir görsel yükleyip analiz başlatın.",
+      "unmatchedTitle": "Eşleşmeyen AI satırları",
+      "removedTitle": "AI sonucunda olmayan aktif kutular kaldırılacak",
+      "rawJson": "Ham JSON çıktısı",
+      "unmatchedBadge": "{{count}} eşleşmeyen",
+      "removedBadge": "{{count}} kaldırılacak",
+      "success_one": "\"{{name}}\" AI sayım kaydı {{count}} satırla oluşturuldu.",
+      "success_other": "\"{{name}}\" AI sayım kaydı {{count}} satırla oluşturuldu.",
+      "actions": {
+        "analyze": "Görseli analiz et",
+        "analyzing": "Analiz ediliyor...",
+        "create": "AI sayım kaydı oluştur"
+      },
+      "productCreate": {
+        "action": "Ürün oluştur",
+        "save": "Ürünü kaydet",
+        "creating": "Oluşturuluyor...",
+        "success": "\"{{name}}\" ürünü oluşturuldu ve incelemeye eklendi.",
+        "existingSkuUsed": "{{sku}} SKU'su zaten var, bu ürün incelemeye eklendi."
+      },
+      "errors": {
+        "loadCatalog": "Ürünler veya aktif kutular yüklenemedi.",
+        "imageRequired": "Analizden önce bir görsel yükleyin.",
+        "analyze": "Gemini bu görseli analiz edemedi.",
+        "analyzeFirst": "Sayım kaydı oluşturmadan önce bir görsel analiz edin.",
+        "reviewRows": "İncelenen her satırda ürün ve pozitif miktar olmalıdır.",
+        "stalePool": "İnceleme sırasında aktif kutular değişti. Görseli yeniden analiz edip tekrar deneyin.",
+        "create": "AI sayım kaydı oluşturulamadı.",
+        "productFields": "Ürün adı, SKU ve değer zorunludur.",
+        "productCreate": "AI satırından ürün oluşturulamadı."
+      }
+    },
     "boxes": {
       "title": "Envanter kutuları",
       "description": "Sayım kaydı almadan önce aktif kutu havuzunu yönetin.",
+      "markedForRemovalBadge_one": "{{count}} kaldırılacak",
+      "markedForRemovalBadge_other": "{{count}} kaldırılacak",
       "errors": {
         "load": "Envanter kutuları yüklenemedi.",
         "invalid": "Ürün, miktar ve kutu tarihi seçin.",
         "save": "Envanter kutusu kaydedilemedi.",
         "remove": "Envanter kutusu kaldırılamadı."
+      },
+      "success": {
+        "create": "Envanter kutusu eklendi.",
+        "update": "Envanter kutusu güncellendi.",
+        "remove": "Envanter kutusu kaldırıldı."
       },
       "form": {
         "boxCodePlaceholder": "Kutu kodu (isteğe bağlı)",
@@ -369,16 +428,17 @@
       },
       "status": {
         "active": "Aktif",
+        "markedForRemoval": "Kaldırılacak",
         "removed": "Kaldırıldı"
       },
       "loadingTitle": "Envanter kutuları yükleniyor",
-      "loadingDescription": "Aktif ve kaldırılmış kutu havuzu alınıyor.",
+      "loadingDescription": "Aktif kutu havuzu alınıyor.",
       "emptyTitle": "Henüz kutu yok",
       "emptyDescription": "Aktif havuza kutu ekleyin, ardından sayım kaydı alın."
     },
     "source": {
       "manual": "Manuel",
-      "drone": "Drone"
+      "drone": "AI Vision"
     },
     "list": {
       "error": "Sayım kayıtları API'den yüklenemedi.",
@@ -441,6 +501,11 @@
       "invalidQuantity": "Miktar sıfır veya daha büyük bir tam sayı olmalıdır.",
       "invalidRange": "Bir ürün ve geçerli bir tarih aralığı seçin.",
       "bulk": "Toplu üretim planı uygulanamadı."
+    },
+    "success": {
+      "saveCell": "Planlama hücresi kaydedildi.",
+      "deleteCell": "Planlama hücresi temizlendi.",
+      "bulk": "Toplu üretim planı uygulandı."
     },
     "view": {
       "week": "Hafta",

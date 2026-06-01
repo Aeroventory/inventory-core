@@ -1,10 +1,12 @@
 # Vision Inference Service
 
-Stub FastAPI service that provides inventory detection from images.
+FastAPI service that uses Google AI Studio Gemini to extract reviewable
+inventory detections from images.
 
 ## Endpoints
 
-- `POST /infer` — Accept an image file or image URL, return detection results
+- `POST /analyze` — Accept an image file or image URL plus product catalog JSON, return matched and unmatched detections
+- `POST /infer` — Legacy compatibility endpoint that returns detection results
 - `GET /health` — Health check
 
 ## Response contract
@@ -13,15 +15,26 @@ Stub FastAPI service that provides inventory detection from images.
 {
   "detections": [
     {
+      "product_id": 1,
       "sku": "ABC-123",
-      "count": 10,
-      "confidence": 0.95,
-      "meta": {}
+      "product_name": "Panel",
+      "box_code": "BOX-001",
+      "quantity": 10,
+      "box_date": "2026-05-31",
+      "confidence_score": 0.95,
+      "notes": "Label was clearly visible."
     }
   ],
-  "model_version": "stub-0.1"
+  "unmatched": [],
+  "raw_json": {},
+  "model_version": "gemini-3.5-flash"
 }
 ```
+
+## Configuration
+
+Set `GEMINI_API_KEY` in the repo `.env`. `GEMINI_MODEL` defaults to
+`gemini-3.5-flash`.
 
 ## Running
 

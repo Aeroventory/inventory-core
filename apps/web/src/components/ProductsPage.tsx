@@ -13,6 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,7 +96,11 @@ export default function ProductsPage() {
     setError(null);
     getProducts()
       .then((res) => setProducts(res.data))
-      .catch(() => setError(t("products.errors.load")))
+      .catch(() => {
+        const message = t("products.errors.load");
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -127,15 +132,21 @@ export default function ProductsPage() {
     const cleaned = cleanDraft(draft) as ProductDTO;
     const value = Number(cleaned.value);
     if (!cleaned.name) {
-      setError(t("products.errors.nameRequired"));
+      const message = t("products.errors.nameRequired");
+      setError(message);
+      toast.error(message);
       return;
     }
     if (!cleaned.sku) {
-      setError(t("products.errors.skuRequired"));
+      const message = t("products.errors.skuRequired");
+      setError(message);
+      toast.error(message);
       return;
     }
     if (Number.isNaN(value)) {
-      setError(t("products.errors.invalidValue"));
+      const message = t("products.errors.invalidValue");
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -152,8 +163,11 @@ export default function ProductsPage() {
       setCreateImages([]);
       setCreatePrimaryImageId(null);
       fetchProducts();
+      toast.success(t("products.success.create", { name: productRes.data.name }));
     } catch {
-      setError(t("products.errors.create"));
+      const message = t("products.errors.create");
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -172,36 +186,55 @@ export default function ProductsPage() {
   const handleUpdate = (productId: number) => {
     const cleaned = cleanDraft(editDraft) as ProductUpdateDTO;
     if (!cleaned.name) {
-      setError(t("products.errors.nameRequired"));
+      const message = t("products.errors.nameRequired");
+      setError(message);
+      toast.error(message);
       return;
     }
     if (!cleaned.sku) {
-      setError(t("products.errors.skuRequired"));
+      const message = t("products.errors.skuRequired");
+      setError(message);
+      toast.error(message);
       return;
     }
 
     const value = Number(cleaned.value);
     if (Number.isNaN(value)) {
-      setError(t("products.errors.invalidValue"));
+      const message = t("products.errors.invalidValue");
+      setError(message);
+      toast.error(message);
       return;
     }
 
     setSaving(true);
     setError(null);
     updateProduct(productId, { ...cleaned, value })
-      .then(() => {
+      .then((res) => {
         cancelEditing();
         fetchProducts();
+        toast.success(t("products.success.update", { name: res.data.name }));
       })
-      .catch(() => setError(t("products.errors.update")))
+      .catch(() => {
+        const message = t("products.errors.update");
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setSaving(false));
   };
 
   const handleDelete = (id: number) => {
+    const product = products.find((item) => item.id === id);
     setError(null);
     deleteProduct(id)
-      .then(() => fetchProducts())
-      .catch(() => setError(t("products.errors.delete")));
+      .then(() => {
+        fetchProducts();
+        toast.success(t("products.success.delete", { name: product?.name ?? t("common.labels.product") }));
+      })
+      .catch(() => {
+        const message = t("products.errors.delete");
+        setError(message);
+        toast.error(message);
+      });
   };
 
   const startMediaEditing = (product: Product) => {
@@ -227,8 +260,13 @@ export default function ProductsPage() {
       .then((res) => {
         setProducts((current) => current.map((product) => (product.id === res.data.id ? res.data : product)));
         cancelMediaEditing();
+        toast.success(t("products.success.updateImages", { name: res.data.name }));
       })
-      .catch(() => setError(t("products.errors.updateImages")))
+      .catch(() => {
+        const message = t("products.errors.updateImages");
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setSaving(false));
   };
 

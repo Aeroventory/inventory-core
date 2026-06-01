@@ -1,6 +1,8 @@
 import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { ToastContainer, type TypeOptions } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import DailyComparisonPage from "@/components/DailyComparisonPage";
 import DashboardPage from "@/components/DashboardOverviewPage";
@@ -14,7 +16,7 @@ import ProductsPage from "@/components/ProductsPage";
 import SnapshotsPage from "@/components/SnapshotsPage";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAuthStore } from "@/stores/auth-store";
-import { Boxes } from "lucide-react";
+import { AlertTriangle, Bell, Boxes, CheckCircle2, XCircle } from "lucide-react";
 
 function AuthLoading() {
   const { t } = useTranslation();
@@ -80,6 +82,36 @@ function DashboardRoute() {
   );
 }
 
+function toastTone(type?: TypeOptions) {
+  switch (type) {
+    case "success":
+      return "inventory-toast--success";
+    case "warning":
+      return "inventory-toast--warning";
+    case "error":
+      return "inventory-toast--error";
+    case "info":
+      return "inventory-toast--info";
+    default:
+      return "inventory-toast--default";
+  }
+}
+
+function toastIcon(type?: TypeOptions) {
+  switch (type) {
+    case "success":
+      return <CheckCircle2 size={18} />;
+    case "warning":
+      return <Bell size={18} />;
+    case "error":
+      return <XCircle size={18} />;
+    case "info":
+      return <AlertTriangle size={18} />;
+    default:
+      return <Bell size={18} />;
+  }
+}
+
 function App() {
   const initialized = useAuthStore((state) => state.initialized);
   const refreshUser = useAuthStore((state) => state.refreshUser);
@@ -93,45 +125,58 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
 
-      <Route element={<RequireAuth />}>
-        <Route element={<ProtectedLayout />}>
-          <Route index element={<DashboardRoute />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/snapshots" element={<SnapshotsPage />} />
-          <Route path="/drone" element={<DroneMissionPage />} />
-          <Route
-            path="/gallery"
-            element={
-              <RequireAdmin>
-                <GalleryPage />
-              </RequireAdmin>
-            }
-          />
-          <Route path="/reports/daily" element={<DailyComparisonPage />} />
-          <Route
-            path="/production-plan"
-            element={
-              <RequirePlanner>
-                <ProductionPlanPage />
-              </RequirePlanner>
-            }
-          />
-          <Route
-            path="/kitchen"
-            element={
-              <RequireAdmin>
-                <KitchenPage />
-              </RequireAdmin>
-            }
-          />
+        <Route element={<RequireAuth />}>
+          <Route element={<ProtectedLayout />}>
+            <Route index element={<DashboardRoute />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/snapshots" element={<SnapshotsPage />} />
+            <Route path="/drone" element={<DroneMissionPage />} />
+            <Route
+              path="/gallery"
+              element={
+                <RequireAdmin>
+                  <GalleryPage />
+                </RequireAdmin>
+              }
+            />
+            <Route path="/reports/daily" element={<DailyComparisonPage />} />
+            <Route
+              path="/production-plan"
+              element={
+                <RequirePlanner>
+                  <ProductionPlanPage />
+                </RequirePlanner>
+              }
+            />
+            <Route
+              path="/kitchen"
+              element={
+                <RequireAdmin>
+                  <KitchenPage />
+                </RequireAdmin>
+              }
+            />
+          </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3500}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        className="inventory-toast-container"
+        toastClassName={(context) => `${context?.defaultClassName ?? ""} inventory-toast ${toastTone(context?.type)}`}
+        hideProgressBar
+        icon={(context) => toastIcon(context.type)}
+      />
+    </>
   );
 }
 

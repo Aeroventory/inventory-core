@@ -85,18 +85,104 @@ button:disabled {
 
 .filepond--root {
   font-family: "Ubuntu Sans", system-ui, sans-serif;
+  margin-bottom: 0;
+}
+
+.filepond--root .filepond--drop-label {
+  min-height: 72px;
 }
 
 .filepond--panel-root {
-  background: #eef4f0;
-  border: 1px solid #d9e4dd;
+  background: #f7faf8;
+  border: 1px dashed #d9e4dd;
+  border-radius: 16px !important;
 }
 
 .filepond--drop-label {
   color: #5b6b63;
+  font-size: 13px;
 }
 
 .filepond--label-action {
   color: #00684a;
   text-decoration-color: #00684a;
+}
+
+.inventory-toast-container {
+  width: min(420px, calc(100vw - 24px));
+}
+
+.inventory-toast {
+  min-height: 0 !important;
+  margin-bottom: 12px !important;
+  padding: 14px 16px !important;
+  border: 1px solid #d9e4dd !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 42px rgba(16, 35, 27, 0.14) !important;
+  font-family: "Ubuntu Sans", system-ui, sans-serif !important;
+}
+
+.inventory-toast--success {
+  color: #00684a !important;
+  background: #e3f6ec !important;
+  border-color: #b6e8cc !important;
+}
+
+.inventory-toast--warning {
+  color: #b7791f !important;
+  background: #fff7e6 !important;
+  border-color: #f4d7a2 !important;
+}
+
+.inventory-toast--error {
+  color: #c2410c !important;
+  background: #fff1ed !important;
+  border-color: #f7b8a4 !important;
+}
+
+.inventory-toast--info {
+  color: #2563eb !important;
+  background: #eef5ff !important;
+  border-color: #bfd7ff !important;
+}
+
+.inventory-toast--default {
+  color: #10231b !important;
+  background: #ffffff !important;
+  border-color: #d9e4dd !important;
+}
+
+.inventory-toast .Toastify__toast-icon {
+  width: 18px;
+  height: 18px;
+  margin-inline-end: 12px;
+  margin-top: 1px;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+.inventory-toast .Toastify__toast-body {
+  align-items: flex-start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  color: currentColor;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.inventory-toast .Toastify__toast-body > div:last-child {
+  padding-top: 0;
+}
+
+.inventory-toast .Toastify__close-button {
+  align-self: flex-start;
+  color: currentColor;
+  opacity: 0.72;
+  padding: 1px;
+}
+
+.inventory-toast .Toastify__close-button:hover {
+  opacity: 1;
 }

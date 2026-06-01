@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, CalendarDays, ImageIcon, RefreshCw, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,11 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
     setError(null);
     getSnapshots()
       .then((res) => setSnapshots(res.data))
-      .catch(() => setError(t("snapshots.list.error")))
+      .catch(() => {
+        const message = t("snapshots.list.error");
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -98,10 +103,9 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
               const totalQuantity = snapshot.items.reduce((sum, item) => sum + item.quantity, 0);
               const snapshotDate = snapshot.created_at.slice(0, 10);
               const primaryImagePath = snapshot.primary_image?.file_path ?? snapshot.file_path;
-              const galleryImages = snapshot.images ?? [];
               return (
                 <article key={snapshot.id} className="overflow-hidden rounded-2xl border border-[#D9E4DD] bg-white">
-                  <div className="grid gap-4 p-4 lg:grid-cols-[160px_1fr]">
+                  <div className="grid gap-4 p-5 lg:grid-cols-[160px_1fr]">
                     <div className="grid h-40 place-items-center overflow-hidden rounded-2xl border border-[#D9E4DD] bg-[#EEF4F0]">
                       {primaryImagePath ? (
                         <img
@@ -122,35 +126,18 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                             {new Date(snapshot.created_at).toLocaleString(i18n.resolvedLanguage)}
                           </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Badge tone={snapshot.is_manual ? "purple" : "blue"}>
                             {snapshot.is_manual ? t("snapshots.source.manual") : t("snapshots.source.drone")}
                           </Badge>
-                          {galleryImages.length > 0 && (
-                            <Badge tone="green">{t("gallery.selectedCount", { count: galleryImages.length })}</Badge>
-                          )}
                           <Badge tone="blue">{t("common.formats.boxes", { count: snapshot.items.length })}</Badge>
                           <Badge tone="green">{t("common.formats.units", { count: totalQuantity })}</Badge>
-                          <Button variant="soft" size="sm" onClick={() => navigate(`/reports/daily?date=${snapshotDate}`)}>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/reports/daily?date=${snapshotDate}`)}>
                             {t("snapshots.list.compare")}
                             <ArrowRight size={14} />
                           </Button>
                         </div>
                       </div>
-
-                      {galleryImages.length > 1 && (
-                        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                          {galleryImages.map((image) => (
-                            <div key={image.id} className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[#D9E4DD] bg-[#EEF4F0]">
-                              <img
-                                src={`${API_URL}/uploads/${image.file_path}`}
-                                alt={image.original_filename || snapshot.name}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
 
                       {snapshot.items.length === 0 ? (
                         <EmptyState icon={ImageIcon} title={t("snapshots.list.noRowsTitle")} description={t("snapshots.list.noRowsDescription")} className="mt-4 min-h-[120px]" />
