@@ -21,6 +21,7 @@ export const navItems = [
   { id: "dashboard", labelKey: "nav.dashboard.label", path: "/", descriptionKey: "nav.dashboard.description" },
   { id: "products", labelKey: "nav.products.label", path: "/products", descriptionKey: "nav.products.description" },
   { id: "snapshots", labelKey: "nav.snapshots.label", path: "/snapshots", descriptionKey: "nav.snapshots.description" },
+  { id: "drone", labelKey: "nav.drone.label", path: "/drone", descriptionKey: "nav.drone.description" },
   {
     id: "gallery",
     labelKey: "nav.gallery.label",

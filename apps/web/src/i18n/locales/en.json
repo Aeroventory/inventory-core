@@ -143,6 +143,10 @@
     "kitchen": {
       "label": "Kitchen",
       "description": "Design system contract"
+    },
+    "drone": {
+      "label": "Drone",
+      "description": "Camera stream and mission control"
     }
   },
   "layout": {
@@ -619,6 +623,73 @@
         "title": "Upload failed",
         "body": "The API returned an error."
       }
+    }
+  },
+  "drone": {
+    "page": {
+      "title": "Drone mission control",
+      "description": "Live camera stream, mission script execution, photo capture, and emergency control for stock checks."
+    },
+    "connection": {
+      "connected": "Drone connected",
+      "standby": "Drone standby"
+    },
+    "actions": {
+      "capturePhoto": "Capture Photo",
+      "emergency": "Emergency",
+      "refreshStream": "Refresh stream",
+      "launchMission": "Launch mission",
+      "loadDefault": "Load default"
+    },
+    "stream": {
+      "title": "Live stream",
+      "description": "RTSP/RTP camera feed relayed by the API.",
+      "alt": "Drone camera stream",
+      "websocketAlt": "Drone WebSocket camera stream",
+      "waiting": "Waiting for frames",
+      "modes": {
+        "mjpeg": "MJPEG",
+        "websocket": "WebSocket"
+      }
+    },
+    "mission": {
+      "title": "Mission script",
+      "description": "Command sequence sent to the connected HTJR drone.",
+      "scriptLabel": "Script"
+    },
+    "metrics": {
+      "frames": "Frames",
+      "lastFrame": "Last frame",
+      "drops": "Drops",
+      "mode": "Mode"
+    },
+    "status": {
+      "step": "Step",
+      "message": "Message",
+      "photo": "Photo"
+    },
+    "states": {
+      "idle": "idle",
+      "running": "running",
+      "done": "done",
+      "error": "error",
+      "emergency": "emergency"
+    },
+    "messages": {
+      "defaultLoaded": "Default mission loaded.",
+      "missionStarted": "Mission started ({{count}} steps).",
+      "emergencySent": "Emergency sent.",
+      "photoSaved": "Saved photo: {{path}}",
+      "connectionRefreshed": "Connection refreshed."
+    },
+    "errors": {
+      "streamToken": "Could not prepare the stream.",
+      "defaultMission": "Could not load the default mission.",
+      "mission": "Mission request failed.",
+      "emergency": "Emergency request failed.",
+      "photo": "Photo capture failed.",
+      "websocket": "WebSocket stream error.",
+      "connection": "Could not connect to the drone."
     }
   }
 }

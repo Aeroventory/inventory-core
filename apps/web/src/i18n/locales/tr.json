@@ -143,6 +143,10 @@
     "kitchen": {
       "label": "Mutfak",
       "description": "Tasarım sistemi sözleşmesi"
+    },
+    "drone": {
+      "label": "Drone",
+      "description": "Kamera yayını ve görev kontrolü"
     }
   },
   "layout": {
@@ -619,6 +623,73 @@
         "title": "Yükleme başarısız",
         "body": "API bir hata döndürdü."
       }
+    }
+  },
+  "drone": {
+    "page": {
+      "title": "Drone görev kontrolü",
+      "description": "Stok kontrolleri için canlı kamera yayını, görev komutu çalıştırma, fotoğraf kaydı ve acil durum kontrolü."
+    },
+    "connection": {
+      "connected": "Drone bağlı",
+      "standby": "Drone beklemede"
+    },
+    "actions": {
+      "capturePhoto": "Fotoğraf Çek",
+      "emergency": "Acil Durum",
+      "refreshStream": "Yayını yenile",
+      "launchMission": "Görevi başlat",
+      "loadDefault": "Varsayılanı yükle"
+    },
+    "stream": {
+      "title": "Canlı yayın",
+      "description": "API üzerinden aktarılan RTSP/RTP kamera yayını.",
+      "alt": "Drone kamera yayını",
+      "websocketAlt": "Drone WebSocket kamera yayını",
+      "waiting": "Kare bekleniyor",
+      "modes": {
+        "mjpeg": "MJPEG",
+        "websocket": "WebSocket"
+      }
+    },
+    "mission": {
+      "title": "Görev komutu",
+      "description": "Bağlı HTJR drone cihazına gönderilen komut sırası.",
+      "scriptLabel": "Komutlar"
+    },
+    "metrics": {
+      "frames": "Kareler",
+      "lastFrame": "Son kare",
+      "drops": "Düşenler",
+      "mode": "Mod"
+    },
+    "status": {
+      "step": "Adım",
+      "message": "Mesaj",
+      "photo": "Fotoğraf"
+    },
+    "states": {
+      "idle": "boşta",
+      "running": "çalışıyor",
+      "done": "tamamlandı",
+      "error": "hata",
+      "emergency": "acil durum"
+    },
+    "messages": {
+      "defaultLoaded": "Varsayılan görev yüklendi.",
+      "missionStarted": "Görev başlatıldı ({{count}} adım).",
+      "emergencySent": "Acil durum gönderildi.",
+      "photoSaved": "Fotoğraf kaydedildi: {{path}}",
+      "connectionRefreshed": "Bağlantı yenilendi."
+    },
+    "errors": {
+      "streamToken": "Yayın hazırlanamadı.",
+      "defaultMission": "Varsayılan görev yüklenemedi.",
+      "mission": "Görev isteği başarısız oldu.",
+      "emergency": "Acil durum isteği başarısız oldu.",
+      "photo": "Fotoğraf çekilemedi.",
+      "websocket": "WebSocket yayın hatası.",
+      "connection": "Drone bağlantısı kurulamadı."
     }
   }
 }

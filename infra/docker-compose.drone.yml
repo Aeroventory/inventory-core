@@ -1,0 +1,16 @@
+services:
+  api:
+    network_mode: host
+    ports: !reset []
+    environment:
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: ${DB_PORT:-5432}
+      VISION_SERVICE_URL: http://127.0.0.1:${VISION_PORT:-8001}
+    command: >
+      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port ${API_PORT:-8003} --reload"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-8003}/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

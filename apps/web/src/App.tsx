@@ -4,6 +4,7 @@ import { Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletCon
 
 import DailyComparisonPage from "@/components/DailyComparisonPage";
 import DashboardPage from "@/components/DashboardOverviewPage";
+import DroneMissionPage from "@/components/DroneMissionPage";
 import GalleryPage from "@/components/GalleryPage";
 import KitchenPage from "@/components/KitchenPage";
 import LoginPage from "@/components/LoginPage";
@@ -100,6 +101,7 @@ function App() {
           <Route index element={<DashboardRoute />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/snapshots" element={<SnapshotsPage />} />
+          <Route path="/drone" element={<DroneMissionPage />} />
           <Route
             path="/gallery"
             element={
