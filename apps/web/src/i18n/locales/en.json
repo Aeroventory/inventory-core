@@ -169,7 +169,7 @@
     },
     "hero": {
       "title": "Inventory dashboard",
-      "description": "Current stock, daily movement, and the next operational shortcuts in one view."
+      "description": "Current stock, daily movement, and operational shortcuts."
     },
     "metrics": {
       "products": {
@@ -237,7 +237,7 @@
   "products": {
     "badge": "Products API",
     "title": "Products",
-    "description": "Table-first CRUD tester for inventory products with required SKU and warehouse location fields.",
+    "description": "Manage inventory products with required SKU and warehouse location fields.",
     "errors": {
       "load": "Failed to load products from the API.",
       "nameRequired": "Product name is required.",
@@ -570,7 +570,7 @@
     "description": "Shared UI ingredients for the light green operations console. Future frontend issues should reuse these shapes before inventing new ones.",
     "palette": {
       "title": "Palette",
-      "description": "Compass-inspired white and green tokens for warehouse workflows.",
+      "description": "White and green tokens inspired by the MongoDB Compass app.",
       "swatches": {
         "background": "Background",
         "surface": "Surface",
@@ -589,16 +589,16 @@
     },
     "typography": {
       "title": "Typography",
-      "description": "Dense, readable, boring in the best way.",
+      "description": "Canonical's Ubuntu Sans for clear operational screens.",
       "h1": "H1 Heading",
       "h1Spec": "36px / 300 / #10231B",
       "h2": "H2 Heading",
       "h2Spec": "24px / 400 / #10231B",
-      "body": "Body copy stays compact and clear, with enough contrast for repeated scanning."
+      "body": "Ubuntu Sans body text for compact operational screens."
     },
     "buttons": {
       "title": "Buttons",
-      "description": "Primary green for normal action, red only for destructive or emergency action.",
+      "description": "Button styles for primary, secondary, warning, and emergency actions.",
       "primary": "Primary",
       "secondary": "Secondary",
       "soft": "Soft",
@@ -608,7 +608,7 @@
     },
     "forms": {
       "title": "Forms",
-      "description": "Rounded controls, soft focus rings, clear labels.",
+      "description": "Rounded form controls with clear focus states and labels.",
       "search": "Search",
       "searchPlaceholder": "Search SKUs, products...",
       "quantity": "Quantity",
@@ -619,7 +619,7 @@
     },
     "badges": {
       "title": "Badges",
-      "description": "Small, scannable state markers.",
+      "description": "Small, recognizable status markers.",
       "healthy": "Healthy",
       "incoming": "Incoming",
       "lowConfidence": "Low confidence",
