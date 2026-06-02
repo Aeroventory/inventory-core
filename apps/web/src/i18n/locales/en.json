@@ -699,6 +699,14 @@
       "connected": "Drone connected",
       "standby": "Drone standby"
     },
+    "connectionModal": {
+      "title": "Connect to the drone network",
+      "description": "This page needs the computer or server running the API to be on the drone's Wi-Fi/network before live stream, photo capture, and mission controls can work.",
+      "details": "The drone is not reachable right now. Join the drone network, confirm the API can reach the drone, then refresh this page's connection.",
+      "openInfo": "Show drone network info",
+      "close": "Close drone network info",
+      "dismiss": "Got it"
+    },
     "actions": {
       "capturePhoto": "Capture Photo",
       "emergency": "Emergency",

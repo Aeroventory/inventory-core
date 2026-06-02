@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Camera, CircleStop, Plane, RefreshCw, RotateCcw, Send, Video, Wifi } from "lucide-react";
+import { AlertTriangle, Camera, CircleStop, Info, Plane, RefreshCw, RotateCcw, Send, Video, Wifi, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,8 @@ export default function DroneMissionPage() {
   const [streamLoading, setStreamLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [connectionModalOpen, setConnectionModalOpen] = useState(false);
+  const connectionPromptShown = useRef(false);
   const lastObjectUrl = useRef("");
 
   const connected = Boolean(status.drone?.connected);
@@ -74,9 +76,29 @@ export default function DroneMissionPage() {
     return url.toString();
   }, [streamNonce, streamToken]);
 
+  const showConnectionPrompt = (once = false) => {
+    if (once && connectionPromptShown.current) return;
+    connectionPromptShown.current = true;
+    setConnectionModalOpen(true);
+  };
+
+  const ensureDroneConnected = () => {
+    if (connected) return true;
+    showConnectionPrompt();
+    return false;
+  };
+
   const refreshStatus = async () => {
-    const response = await getDroneMissionStatus();
-    setStatus(response.data);
+    try {
+      const response = await getDroneMissionStatus();
+      setStatus(response.data);
+      if (!response.data.drone?.connected) {
+        showConnectionPrompt(true);
+      }
+    } catch (nextError) {
+      showConnectionPrompt(true);
+      throw nextError;
+    }
   };
 
   const refreshConnection = async () => {
@@ -86,9 +108,15 @@ export default function DroneMissionPage() {
     try {
       const response = await connectDrone();
       setStatus(response.data);
+      if (!response.data.drone?.connected) {
+        showConnectionPrompt();
+      } else {
+        setConnectionModalOpen(false);
+      }
       await refreshStreamToken();
       setMessage(t("drone.messages.connectionRefreshed"));
     } catch (nextError) {
+      showConnectionPrompt();
       setError(apiErrorMessage(nextError, t("drone.errors.connection")));
     } finally {
       setBusy(false);
@@ -104,6 +132,7 @@ export default function DroneMissionPage() {
       setStreamNonce((value) => value + 1);
       return response.data.token;
     } catch (nextError) {
+      showConnectionPrompt(true);
       setError(apiErrorMessage(nextError, t("drone.errors.streamToken")));
       return "";
     } finally {
@@ -123,6 +152,7 @@ export default function DroneMissionPage() {
   };
 
   const launchMission = async () => {
+    if (!ensureDroneConnected()) return;
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -138,6 +168,7 @@ export default function DroneMissionPage() {
   };
 
   const emergencyStop = async () => {
+    if (!ensureDroneConnected()) return;
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -153,6 +184,7 @@ export default function DroneMissionPage() {
   };
 
   const capturePhoto = async () => {
+    if (!ensureDroneConnected()) return;
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -206,6 +238,7 @@ export default function DroneMissionPage() {
     };
 
     socket.onerror = () => {
+      showConnectionPrompt(true);
       setError(t("drone.errors.websocket"));
     };
 
@@ -218,6 +251,19 @@ export default function DroneMissionPage() {
       }
     };
   }, [streamMode, streamToken, t]);
+
+  useEffect(() => {
+    if (!connectionModalOpen) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setConnectionModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [connectionModalOpen]);
 
   const streamImage =
     streamMode === "mjpeg" ? (
@@ -234,6 +280,59 @@ export default function DroneMissionPage() {
 
   return (
     <div className="space-y-6">
+      {connectionModalOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231B]/55 px-4 py-8" role="presentation" onMouseDown={() => setConnectionModalOpen(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="drone-network-modal-title"
+            aria-describedby="drone-network-modal-description"
+            className="w-full max-w-lg rounded-2xl border border-[#D9E4DD] bg-white p-5 shadow-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#FFF7ED] text-[#B7791F]">
+                  <Wifi size={20} />
+                </div>
+                <div>
+                  <h2 id="drone-network-modal-title" className="text-xl font-semibold text-[#10231B]">
+                    {t("drone.connectionModal.title")}
+                  </h2>
+                  <p id="drone-network-modal-description" className="mt-2 text-sm leading-6 text-[#5B6B63]">
+                    {t("drone.connectionModal.description")}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setConnectionModalOpen(false)}
+                aria-label={t("drone.connectionModal.close")}
+                className="shrink-0"
+              >
+                <X size={17} />
+              </Button>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[#D9E4DD] bg-[#F7FAF8] p-4 text-sm leading-6 text-[#10231B]">
+              {t("drone.connectionModal.details")}
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setConnectionModalOpen(false)}>
+                {t("drone.connectionModal.dismiss")}
+              </Button>
+              <Button type="button" onClick={() => void refreshConnection()} disabled={busy}>
+                <RefreshCw size={16} />
+                {t("common.actions.refresh")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <Badge tone={connected ? "green" : "warning"}>
@@ -244,6 +343,16 @@ export default function DroneMissionPage() {
           <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">{t("drone.page.description")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            onClick={() => showConnectionPrompt()}
+            aria-label={t("drone.connectionModal.openInfo")}
+            title={t("drone.connectionModal.openInfo")}
+          >
+            <Info size={16} />
+          </Button>
           <Button variant="secondary" onClick={() => void refreshConnection()} disabled={busy}>
             <RefreshCw size={16} />
             {t("common.actions.refresh")}

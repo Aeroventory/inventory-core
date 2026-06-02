@@ -699,6 +699,14 @@
       "connected": "Drone bağlı",
       "standby": "Drone beklemede"
     },
+    "connectionModal": {
+      "title": "Drone ağına bağlanın",
+      "description": "Canlı yayın, fotoğraf çekimi ve görev kontrollerinin çalışması için API'yi çalıştıran bilgisayarın veya sunucunun drone Wi-Fi/ağına bağlı olması gerekir.",
+      "details": "Drone şu anda erişilebilir değil. Drone ağına bağlanın, API'nin drone'a erişebildiğini doğrulayın ve ardından bu sayfanın bağlantısını yenileyin.",
+      "openInfo": "Drone ağ bilgisini göster",
+      "close": "Drone ağ bilgisini kapat",
+      "dismiss": "Anladım"
+    },
     "actions": {
       "capturePhoto": "Fotoğraf Çek",
       "emergency": "Acil Durum",
