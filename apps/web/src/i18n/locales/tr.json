@@ -255,6 +255,7 @@
       "delete": "\"{{name}}\" ürünü silindi."
     },
     "create": {
+      "openButton": "Yeni ürün",
       "title": "Ürün oluştur",
       "description": "Zorunlu SKU ve isteğe bağlı konum alanları dahil olmak üzere backend ürün şemasıyla envanter satırları oluşturun.",
       "galleryTitle": "Ürün görselleri",

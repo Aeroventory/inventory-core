@@ -272,7 +272,7 @@ export default function DashboardOverviewPage({
                   : t("dashboard.dailyDelta.description")}
               </CardDescription>
             </div>
-            <Button variant="soft" size="sm" onClick={() => onNavigate(`/reports/daily${summary ? `?date=${summary.snapshot_date}` : ""}`)}>
+            <Button variant="soft" size="sm" onClick={() => onNavigate(`/reports/daily${summary ? `?date=${summary.snapshot_date}` : ""}`)} className="shrink-0 whitespace-nowrap px-4">
               {t("dashboard.dailyDelta.openReport")}
               <ArrowRight size={14} />
             </Button>
@@ -309,7 +309,7 @@ export default function DashboardOverviewPage({
               <CardTitle>{t("dashboard.recentSnapshots.title")}</CardTitle>
               <CardDescription>{t("dashboard.recentSnapshots.description")}</CardDescription>
             </div>
-            <Button variant="soft" size="sm" onClick={() => onNavigate("/snapshots")}>
+            <Button variant="soft" size="sm" onClick={() => onNavigate("/snapshots")} className="shrink-0 whitespace-nowrap px-4">
               {t("common.actions.viewSnapshots")}
               <ArrowRight size={14} />
             </Button>
@@ -357,13 +357,13 @@ export default function DashboardOverviewPage({
             <button
               key={item.path}
               onClick={() => onNavigate(item.path)}
-              className="flex min-h-[74px] items-center justify-between rounded-2xl border border-[#D9E4DD] bg-white p-4 text-left transition hover:border-[#00684A] hover:bg-[#F7FAF8]"
+              className="flex min-h-[74px] items-center justify-between gap-3 rounded-2xl border border-[#D9E4DD] bg-white p-4 text-left transition hover:border-[#00684A] hover:bg-[#F7FAF8]"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#E3F6EC] text-[#00684A]">
                   <item.icon size={18} />
                 </span>
-                <span className="truncate font-medium text-[#10231B]">{item.label}</span>
+                <span className="min-w-0 truncate font-medium leading-5 text-[#10231B]">{item.label}</span>
               </span>
               <ArrowRight size={16} className="shrink-0 text-[#5B6B63]" />
             </button>

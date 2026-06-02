@@ -255,6 +255,7 @@
       "delete": "Product \"{{name}}\" deleted."
     },
     "create": {
+      "openButton": "New product",
       "title": "Create product",
       "description": "Create inventory rows with the backend product schema, including required SKU and optional location fields.",
       "galleryTitle": "Product images",

@@ -81,6 +81,7 @@ export default function ProductsPage() {
   const [draft, setDraft] = useState<ProductDTO>(emptyDraft);
   const [createImages, setCreateImages] = useState<MediaAsset[]>([]);
   const [createPrimaryImageId, setCreatePrimaryImageId] = useState<number | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState<ProductUpdateDTO>({});
   const [mediaProduct, setMediaProduct] = useState<Product | null>(null);
@@ -107,6 +108,26 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+    setDraft(emptyDraft);
+    setCreateImages([]);
+    setCreatePrimaryImageId(null);
+  };
+
+  useEffect(() => {
+    if (!createModalOpen) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeCreateModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [createModalOpen]);
 
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -162,6 +183,7 @@ export default function ProductsPage() {
       setDraft(emptyDraft);
       setCreateImages([]);
       setCreatePrimaryImageId(null);
+      setCreateModalOpen(false);
       fetchProducts();
       toast.success(t("products.success.create", { name: productRes.data.name }));
     } catch {
@@ -301,57 +323,24 @@ export default function ProductsPage() {
             {t("products.description")}
           </p>
         </div>
-        <Button variant="secondary" onClick={fetchProducts} disabled={loading}>
-          <RefreshCw size={16} />
-          {t("common.actions.refresh")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {isAdmin && (
+            <Button onClick={() => setCreateModalOpen(true)}>
+              <Plus size={16} />
+              {t("products.create.openButton")}
+            </Button>
+          )}
+          <Button variant="secondary" onClick={fetchProducts} disabled={loading}>
+            <RefreshCw size={16} />
+            {t("common.actions.refresh")}
+          </Button>
+        </div>
       </div>
 
       {error && (
         <div className="rounded-2xl border border-[#F7B8A4] bg-[#FFF1ED] px-4 py-3 text-sm font-semibold text-[#C2410C]">
           {error}
         </div>
-      )}
-
-      {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("products.create.title")}</CardTitle>
-            <CardDescription>
-              {t("products.create.description")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.8fr_0.8fr_0.8fr_1fr_auto]">
-              <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder={t("products.create.placeholders.name")} />
-              <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder={t("products.create.placeholders.sku")} />
-              <Input
-                type="number"
-                value={draft.value || ""}
-                onChange={(event) => setDraft({ ...draft, value: Number(event.target.value) })}
-                placeholder={t("products.create.placeholders.value")}
-              />
-              <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder={t("products.create.placeholders.site")} />
-              <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder={t("products.create.placeholders.aisle")} />
-              <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder={t("products.create.placeholders.rack")} />
-              <Input value={draft.raw_materials} onChange={(event) => setDraft({ ...draft, raw_materials: event.target.value })} placeholder={t("products.create.placeholders.rawMaterials")} />
-              <Button onClick={handleCreate} disabled={saving}>
-                <Plus size={16} />
-                {t("common.actions.add")}
-              </Button>
-            </div>
-            <GallerySelector
-              selectedImages={createImages}
-              primaryImageId={createPrimaryImageId}
-              onChange={(images, primaryImageId) => {
-                setCreateImages(images);
-                setCreatePrimaryImageId(primaryImageId);
-              }}
-              title={t("products.create.galleryTitle")}
-              description={t("products.create.galleryDescription")}
-            />
-          </CardContent>
-        </Card>
       )}
 
       <Card>
@@ -499,6 +488,69 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && createModalOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#10231B]/55 px-4 py-8" role="presentation" onMouseDown={closeCreateModal}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-product-modal-title"
+            aria-describedby="create-product-modal-description"
+            className="w-full max-w-5xl rounded-2xl border border-[#D9E4DD] bg-white shadow-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex flex-col gap-4 border-b border-[#D9E4DD] px-5 py-5 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle id="create-product-modal-title">{t("products.create.title")}</CardTitle>
+                <CardDescription id="create-product-modal-description">
+                  {t("products.create.description")}
+                </CardDescription>
+              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={closeCreateModal} aria-label={t("common.actions.cancel")}>
+                <X size={17} />
+              </Button>
+            </div>
+            <div className="space-y-5 px-5 py-5">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder={t("products.create.placeholders.name")} />
+                <Input value={draft.sku} onChange={(event) => setDraft({ ...draft, sku: event.target.value })} placeholder={t("products.create.placeholders.sku")} />
+                <Input
+                  type="number"
+                  value={draft.value || ""}
+                  onChange={(event) => setDraft({ ...draft, value: Number(event.target.value) })}
+                  placeholder={t("products.create.placeholders.value")}
+                />
+                <Input value={draft.location_site} onChange={(event) => setDraft({ ...draft, location_site: event.target.value })} placeholder={t("products.create.placeholders.site")} />
+                <Input value={draft.location_aisle} onChange={(event) => setDraft({ ...draft, location_aisle: event.target.value })} placeholder={t("products.create.placeholders.aisle")} />
+                <Input value={draft.location_rack} onChange={(event) => setDraft({ ...draft, location_rack: event.target.value })} placeholder={t("products.create.placeholders.rack")} />
+                <div className="md:col-span-2 xl:col-span-3">
+                  <Input value={draft.raw_materials} onChange={(event) => setDraft({ ...draft, raw_materials: event.target.value })} placeholder={t("products.create.placeholders.rawMaterials")} />
+                </div>
+              </div>
+              <GallerySelector
+                selectedImages={createImages}
+                primaryImageId={createPrimaryImageId}
+                onChange={(images, primaryImageId) => {
+                  setCreateImages(images);
+                  setCreatePrimaryImageId(primaryImageId);
+                }}
+                title={t("products.create.galleryTitle")}
+                description={t("products.create.galleryDescription")}
+              />
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button type="button" variant="secondary" onClick={closeCreateModal}>
+                  <X size={16} />
+                  {t("common.actions.cancel")}
+                </Button>
+                <Button type="button" onClick={handleCreate} disabled={saving}>
+                  <Plus size={16} />
+                  {t("common.actions.add")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isAdmin && mediaProduct && (
         <Card>
