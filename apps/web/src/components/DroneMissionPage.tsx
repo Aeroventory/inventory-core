@@ -10,7 +10,6 @@ import type { DroneMissionStatus, DronePhotoResponse, DroneStreamMode } from "@/
 import {
   captureDronePhoto,
   connectDrone,
-  createDroneStreamToken,
   droneAssetUrl,
   droneMjpegUrl,
   droneWebSocketUrl,
@@ -21,13 +20,14 @@ import {
 } from "@/services/drone-endpoints";
 
 const FALLBACK_SCRIPT = `takeoff 0.06
-wait 2
-back 0.3
-yaw_left 0.3
-neutral 0.5
-yaw_right 0.5
-wait 0.6
+up 2
+forward 2.5
+yaw_right 0.7
+wait 1
 photo
+wait 1
+yaw_right 0.7
+forward 2.5
 down 3
 emergency 1
 `;
@@ -51,13 +51,11 @@ export default function DroneMissionPage() {
   const { t } = useTranslation();
   const [script, setScript] = useState(FALLBACK_SCRIPT);
   const [streamMode, setStreamMode] = useState<DroneStreamMode>("mjpeg");
-  const [streamToken, setStreamToken] = useState("");
   const [streamNonce, setStreamNonce] = useState(0);
   const [wsFrameUrl, setWsFrameUrl] = useState("");
   const [status, setStatus] = useState<DroneMissionStatus>({});
   const [lastPhoto, setLastPhoto] = useState<DronePhotoResponse | null>(null);
   const [busy, setBusy] = useState(false);
-  const [streamLoading, setStreamLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [connectionModalOpen, setConnectionModalOpen] = useState(false);
@@ -70,11 +68,10 @@ export default function DroneMissionPage() {
   const currentPhotoHref = photoHref(lastPhoto, status);
 
   const mjpegUrl = useMemo(() => {
-    if (!streamToken) return "";
-    const url = new URL(droneMjpegUrl(streamToken));
+    const url = new URL(droneMjpegUrl());
     url.searchParams.set("ts", streamNonce.toString());
     return url.toString();
-  }, [streamNonce, streamToken]);
+  }, [streamNonce]);
 
   const showConnectionPrompt = (once = false) => {
     if (once && connectionPromptShown.current) return;
@@ -113,7 +110,7 @@ export default function DroneMissionPage() {
       } else {
         setConnectionModalOpen(false);
       }
-      await refreshStreamToken();
+      refreshStream();
       setMessage(t("drone.messages.connectionRefreshed"));
     } catch (nextError) {
       showConnectionPrompt();
@@ -123,21 +120,8 @@ export default function DroneMissionPage() {
     }
   };
 
-  const refreshStreamToken = async () => {
-    setStreamLoading(true);
-    setError(null);
-    try {
-      const response = await createDroneStreamToken();
-      setStreamToken(response.data.token);
-      setStreamNonce((value) => value + 1);
-      return response.data.token;
-    } catch (nextError) {
-      showConnectionPrompt(true);
-      setError(apiErrorMessage(nextError, t("drone.errors.streamToken")));
-      return "";
-    } finally {
-      setStreamLoading(false);
-    }
+  const refreshStream = () => {
+    setStreamNonce((value) => value + 1);
   };
 
   const loadDefaultMission = async (showMessage = true) => {
@@ -203,7 +187,7 @@ export default function DroneMissionPage() {
   useEffect(() => {
     void refreshStatus().catch(() => undefined);
     void loadDefaultMission(false);
-    void refreshStreamToken();
+    refreshStream();
 
     const id = window.setInterval(() => {
       void refreshStatus().catch(() => undefined);
@@ -222,10 +206,8 @@ export default function DroneMissionPage() {
       return;
     }
 
-    if (!streamToken) return;
-
     let cancelled = false;
-    const socket = new WebSocket(droneWebSocketUrl(streamToken));
+    const socket = new WebSocket(droneWebSocketUrl());
     socket.binaryType = "blob";
 
     socket.onmessage = (event) => {
@@ -250,7 +232,7 @@ export default function DroneMissionPage() {
         lastObjectUrl.current = "";
       }
     };
-  }, [streamMode, streamToken, t]);
+  }, [streamMode, streamNonce, t]);
 
   useEffect(() => {
     if (!connectionModalOpen) return undefined;
@@ -406,8 +388,8 @@ export default function DroneMissionPage() {
                   </button>
                 ))}
               </div>
-              <Button variant="secondary" size="sm" onClick={() => void refreshStreamToken()} disabled={streamLoading}>
-                {streamLoading ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              <Button variant="secondary" size="sm" onClick={refreshStream}>
+                <RefreshCw size={14} />
                 {t("drone.actions.refreshStream")}
               </Button>
             </div>

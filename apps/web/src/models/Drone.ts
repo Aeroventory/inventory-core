@@ -35,9 +35,3 @@ export interface DronePhotoResponse {
   file_path: string;
   url: string;
 }
-
-export interface DroneStreamTokenResponse {
-  token: string;
-  expires_at: number;
-  ttl_seconds: number;
-}

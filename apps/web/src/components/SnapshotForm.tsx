@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Save, UploadCloud } from "lucide-react";
 import { toast } from "react-toastify";
 
+import CameraCaptureButton from "@/components/CameraCaptureButton";
 import InventoryBoxPool from "@/components/InventoryBoxPool";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -146,20 +147,29 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
 
           <div>
             <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotImage")}</span>
-            <FilePond
-              allowMultiple={false}
-              acceptedFileTypes={["image/*"]}
-              labelIdle={t("snapshots.form.filePondLabel")}
-              onaddfile={(_error, fileItem) => {
-                if (fileItem?.file) {
-                  handleFileUpload(fileItem.file as File);
-                }
-              }}
-              onremovefile={() => {
-                setFilePath(null);
-                setTempFilename(null);
-              }}
-            />
+            <div className="space-y-3">
+              <FilePond
+                allowMultiple={false}
+                acceptedFileTypes={["image/*"]}
+                labelIdle={t("snapshots.form.filePondLabel")}
+                onaddfile={(_error, fileItem) => {
+                  if (fileItem?.file) {
+                    void handleFileUpload(fileItem.file as File);
+                  }
+                }}
+                onremovefile={() => {
+                  setFilePath(null);
+                  setTempFilename(null);
+                }}
+              />
+              <CameraCaptureButton
+                filenamePrefix="camera-snapshot"
+                buttonLabel={t("camera.actions.open")}
+                title={t("camera.snapshotTitle")}
+                disabled={uploading}
+                onCapture={(file) => void handleFileUpload(file)}
+              />
+            </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               {uploading && <Badge tone="blue">{t("common.badges.uploading")}</Badge>}
               {filePath && <Badge tone="green">{t("common.badges.savedFile", { path: filePath })}</Badge>}

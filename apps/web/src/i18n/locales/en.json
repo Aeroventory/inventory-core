@@ -317,6 +317,36 @@
       "delete": "Image deleted."
     }
   },
+  "camera": {
+    "title": "Camera capture",
+    "galleryTitle": "Capture gallery image",
+    "snapshotTitle": "Capture snapshot image",
+    "aiSnapshotTitle": "Capture AI snapshot image",
+    "previewAlt": "Captured camera photo",
+    "liveLabel": "Live camera preview",
+    "capturedCount_one": "{{count}} camera photo staged",
+    "capturedCount_other": "{{count}} camera photos staged",
+    "actions": {
+      "open": "Use camera",
+      "starting": "Starting camera...",
+      "retry": "Try again",
+      "capture": "Capture photo",
+      "retake": "Retake",
+      "usePhoto": "Use photo",
+      "removeCaptured": "Remove captured photo"
+    },
+    "states": {
+      "notStarted": "Camera is not active."
+    },
+    "errors": {
+      "unsupported": "Camera capture is not supported by this browser.",
+      "permission": "Camera permission was denied. Allow camera access and try again.",
+      "notFound": "No camera was found on this device.",
+      "start": "Could not start the camera.",
+      "capture": "Could not capture a photo.",
+      "noFrame": "Camera is not ready yet."
+    }
+  },
   "snapshots": {
     "page": {
       "badge": "Snapshots API",
@@ -781,7 +811,6 @@
       "connectionRefreshed": "Connection refreshed."
     },
     "errors": {
-      "streamToken": "Could not prepare the stream.",
       "defaultMission": "Could not load the default mission.",
       "mission": "Mission request failed.",
       "emergency": "Emergency request failed.",

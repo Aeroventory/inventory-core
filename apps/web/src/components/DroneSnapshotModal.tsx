@@ -36,7 +36,6 @@ import {
 import {
   captureDronePhoto,
   connectDrone,
-  createDroneStreamToken,
   droneAssetUrl,
   droneMjpegUrl,
   droneWebSocketUrl,
@@ -47,13 +46,14 @@ import {
 } from "@/services/drone-endpoints";
 
 const FALLBACK_SCRIPT = `takeoff 0.06
-wait 2
-back 0.3
-yaw_left 0.3
-neutral 0.5
-yaw_right 0.5
-wait 0.6
+up 2
+forward 2.5
+yaw_right 0.7
+wait 1
 photo
+wait 1
+yaw_right 0.7
+forward 2.5
 down 3
 emergency 1
 `;
@@ -139,7 +139,6 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
   const [snapshotDate, setSnapshotDate] = useState(todayIso);
   const [script, setScript] = useState(FALLBACK_SCRIPT);
   const [streamMode, setStreamMode] = useState<DroneStreamMode>("mjpeg");
-  const [streamToken, setStreamToken] = useState("");
   const [streamNonce, setStreamNonce] = useState(0);
   const [wsFrameUrl, setWsFrameUrl] = useState("");
   const [status, setStatus] = useState<DroneMissionStatus>({});
@@ -150,7 +149,6 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
   const [modelVersion, setModelVersion] = useState<string | null>(null);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [streamLoading, setStreamLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [productDraftRowId, setProductDraftRowId] = useState<string | null>(null);
@@ -174,11 +172,10 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
   const photoKey = photoPaths.join("|");
 
   const mjpegUrl = useMemo(() => {
-    if (!streamToken) return "";
-    const url = new URL(droneMjpegUrl(streamToken));
+    const url = new URL(droneMjpegUrl());
     url.searchParams.set("ts", streamNonce.toString());
     return url.toString();
-  }, [streamNonce, streamToken]);
+  }, [streamNonce]);
 
   const removedBoxes = useMemo(() => {
     const reviewedCodes = new Set(
@@ -212,7 +209,6 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
     setSnapshotDate(todayIso());
     setScript(FALLBACK_SCRIPT);
     setStreamMode("mjpeg");
-    setStreamToken("");
     setStreamNonce(0);
     setWsFrameUrl("");
     setStatus({});
@@ -257,7 +253,7 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
       const response = await connectDrone();
       setStatus(response.data);
       mergePhotoPaths([...(response.data.photo_paths ?? []), response.data.last_photo_path]);
-      await refreshStreamToken();
+      refreshStream();
       setMessage(t("drone.messages.connectionRefreshed"));
     } catch (nextError) {
       setError(apiErrorMessage(nextError, t("drone.errors.connection")));
@@ -266,20 +262,8 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
     }
   };
 
-  const refreshStreamToken = async () => {
-    setStreamLoading(true);
-    setError(null);
-    try {
-      const response = await createDroneStreamToken();
-      setStreamToken(response.data.token);
-      setStreamNonce((value) => value + 1);
-      return response.data.token;
-    } catch (nextError) {
-      setError(apiErrorMessage(nextError, t("drone.errors.streamToken")));
-      return "";
-    } finally {
-      setStreamLoading(false);
-    }
+  const refreshStream = () => {
+    setStreamNonce((value) => value + 1);
   };
 
   const loadDefaultMission = async (showMessage = true) => {
@@ -634,7 +618,7 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
 
     void refreshStatus().catch(() => undefined);
     void loadDefaultMission(false);
-    void refreshStreamToken();
+    refreshStream();
 
     const id = window.setInterval(() => {
       void refreshStatus().catch(() => undefined);
@@ -653,10 +637,8 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
       return;
     }
 
-    if (!streamToken) return;
-
     let cancelled = false;
-    const socket = new WebSocket(droneWebSocketUrl(streamToken));
+    const socket = new WebSocket(droneWebSocketUrl());
     socket.binaryType = "blob";
 
     socket.onmessage = (event) => {
@@ -680,7 +662,7 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
         lastObjectUrl.current = "";
       }
     };
-  }, [open, streamMode, streamToken, t]);
+  }, [open, streamMode, streamNonce, t]);
 
   useEffect(() => {
     if (!open || missionState !== "done" || photoPaths.length === 0 || analyzing || rows.length > 0) return;
@@ -782,8 +764,8 @@ export default function DroneSnapshotModal({ open, onClose, onSaved }: DroneSnap
                       <RefreshCw size={14} />
                       {t("common.actions.refresh")}
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={() => void refreshStreamToken()} disabled={streamLoading}>
-                      {streamLoading ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                    <Button variant="secondary" size="sm" onClick={refreshStream}>
+                      <RefreshCw size={14} />
                       {t("drone.actions.refreshStream")}
                     </Button>
                     <Button variant="secondary" size="sm" onClick={() => void capturePhoto()} disabled={busy}>

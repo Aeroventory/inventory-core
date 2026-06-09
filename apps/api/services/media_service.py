@@ -37,6 +37,23 @@ def create_media_asset(db: Session, file: UploadFile, uploader_id: int | None) -
     return asset
 
 
+def register_media_asset_from_local(db: Session, file_path: str, uploader_id: int | None = None) -> MediaAsset:
+    absolute_path = UPLOADS_DIR / file_path
+    original_filename = absolute_path.name
+    
+    asset = MediaAsset(
+        file_path=file_path,
+        original_filename=original_filename,
+        content_type="image/jpeg",
+        size_bytes=absolute_path.stat().st_size if absolute_path.exists() else 0,
+        uploaded_by_user_id=uploader_id,
+    )
+    db.add(asset)
+    db.commit()
+    db.refresh(asset)
+    return asset
+
+
 def delete_media_asset(db: Session, media_asset_id: int) -> bool:
     asset = (
         db.query(MediaAsset)

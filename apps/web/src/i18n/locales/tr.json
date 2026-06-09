@@ -317,6 +317,36 @@
       "delete": "Görsel silindi."
     }
   },
+  "camera": {
+    "title": "Kamera çekimi",
+    "galleryTitle": "Galeri görseli çek",
+    "snapshotTitle": "Sayım görseli çek",
+    "aiSnapshotTitle": "AI sayım görseli çek",
+    "previewAlt": "Kamerayla çekilen fotoğraf",
+    "liveLabel": "Canlı kamera önizlemesi",
+    "capturedCount_one": "{{count}} kamera fotoğrafı hazır",
+    "capturedCount_other": "{{count}} kamera fotoğrafı hazır",
+    "actions": {
+      "open": "Kamerayı kullan",
+      "starting": "Kamera başlatılıyor...",
+      "retry": "Tekrar dene",
+      "capture": "Fotoğraf çek",
+      "retake": "Yeniden çek",
+      "usePhoto": "Fotoğrafı kullan",
+      "removeCaptured": "Çekilen fotoğrafı kaldır"
+    },
+    "states": {
+      "notStarted": "Kamera aktif değil."
+    },
+    "errors": {
+      "unsupported": "Bu tarayıcı kamera çekimini desteklemiyor.",
+      "permission": "Kamera izni reddedildi. Kamera erişimine izin verip tekrar deneyin.",
+      "notFound": "Bu cihazda kamera bulunamadı.",
+      "start": "Kamera başlatılamadı.",
+      "capture": "Fotoğraf çekilemedi.",
+      "noFrame": "Kamera henüz hazır değil."
+    }
+  },
   "snapshots": {
     "page": {
       "badge": "Sayım Kayıtları API'si",
@@ -781,7 +811,6 @@
       "connectionRefreshed": "Bağlantı yenilendi."
     },
     "errors": {
-      "streamToken": "Yayın hazırlanamadı.",
       "defaultMission": "Varsayılan görev yüklenemedi.",
       "mission": "Görev isteği başarısız oldu.",
       "emergency": "Acil durdurma isteği başarısız oldu.",

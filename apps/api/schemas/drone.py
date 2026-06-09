@@ -17,9 +17,3 @@ class DroneDefaultMissionResponse(BaseModel):
 class DronePhotoResponse(BaseModel):
     file_path: str
     url: str
-
-
-class DroneStreamTokenResponse(BaseModel):
-    token: str
-    expires_at: float
-    ttl_seconds: int

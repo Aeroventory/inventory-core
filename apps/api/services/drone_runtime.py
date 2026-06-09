@@ -8,6 +8,7 @@ the API app so the FastAPI router can call it lazily.
 
 from __future__ import annotations
 
+import asyncio
 import random
 import re
 import socket
@@ -15,7 +16,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterator
+from typing import AsyncIterator, Awaitable, Callable
 
 from services.file_service import UPLOADS_DIR
 
@@ -225,7 +226,10 @@ class RtspUdpSession:
                 content_length = int(line.split(":", 1)[1].strip())
                 break
         while len(body) < content_length:
-            body += self.tcp.recv(content_length - len(body))
+            chunk = self.tcp.recv(content_length - len(body))
+            if not chunk:
+                raise RuntimeError("RTSP connection closed while reading body")
+            body += chunk
         return header_text + "\r\n\r\n" + body.decode("latin1", errors="replace")
 
     @staticmethod
@@ -401,11 +405,16 @@ class RtspUdpSession:
     def close(self) -> None:
         self.running = False
         try:
+            self.tcp.settimeout(0.5)
             if self.session:
                 self.request("TEARDOWN", self.url, f"Session: {self.session}\r\n")
         except Exception:
             pass
         for sock in (self.tcp, self.rtp, self.rtcp):
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except Exception:
+                pass
             try:
                 sock.close()
             except Exception:
@@ -734,6 +743,8 @@ class DroneRuntime:
         self.latest_jpeg: bytes | None = None
         self.latest_frame_time = 0.0
         self.frame_id = 0
+        self._keepalive_suppressed = False
+        self._keepalive_thread: threading.Thread | None = None
 
     def ensure_started(self) -> None:
         with self.lock:
@@ -750,6 +761,7 @@ class DroneRuntime:
             session.connect()
             self.session = session
             self._send_neutral_warmup()
+            self._start_keepalive()
 
     def _on_rtp_packet(self, data: bytes) -> None:
         packet = parse_rtp_packet(data)
@@ -799,15 +811,27 @@ class DroneRuntime:
         session = self.session
         if session is None:
             raise RuntimeError("Drone session is not connected")
-        session.send_control(build_htjr_packet(self.with_common(state)))
+        self._keepalive_suppressed = True
+        try:
+            session.send_control(build_htjr_packet(self.with_common(state)))
+        finally:
+            self._keepalive_suppressed = False
 
     def send_for(self, state: HtjrPacketState, seconds: float, label: str = "") -> None:
+        self.ensure_started()
+        session = self.session
+        if session is None:
+            raise RuntimeError("Drone session is not connected")
         end = time.time() + max(0.0, seconds)
         if label:
             print(f"[DRONE] {label} for {seconds:.2f}s")
-        while time.time() < end:
-            self.send_state(state)
-            time.sleep(self.config.send_interval)
+        self._keepalive_suppressed = True
+        try:
+            while time.time() < end:
+                session.send_control(build_htjr_packet(self.with_common(state)))
+                time.sleep(self.config.send_interval)
+        finally:
+            self._keepalive_suppressed = False
 
     def neutral_for(self, seconds: float, label: str = "") -> None:
         self.send_for(self.neutral(), seconds, label or "neutral")
@@ -824,10 +848,40 @@ class DroneRuntime:
             session.send_control(packet)
             time.sleep(self.config.send_interval)
 
+    def _start_keepalive(self) -> None:
+        if self._keepalive_thread is not None and self._keepalive_thread.is_alive():
+            return
+        self._keepalive_thread = threading.Thread(
+            target=self._keepalive_loop, daemon=True
+        )
+        self._keepalive_thread.start()
+
+    def _keepalive_loop(self) -> None:
+        """Continuously send neutral control packets to keep the drone stream alive.
+
+        The HT-UFO firmware drops the RTSP/RTP video stream when it stops
+        receiving control packets.  The old pygame scripts sent packets in a
+        tight loop; this background thread replicates that behaviour so the
+        FastAPI streaming endpoints keep working indefinitely.
+        """
+        while True:
+            session = self.session
+            if session is None or not session.running:
+                break
+            if not self._keepalive_suppressed:
+                try:
+                    packet = build_htjr_packet(self.neutral())
+                    session.send_control(packet)
+                except Exception:
+                    break
+            time.sleep(self.config.send_interval)
+
     def wait_for_frame(self, last_seen: int = 0, timeout: float = 5.0) -> tuple[int, bytes] | None:
         deadline = time.time() + timeout
         with self.frame_condition:
             while self.frame_id <= last_seen:
+                if not self._is_running_locked():
+                    return None
                 remaining = deadline - time.time()
                 if remaining <= 0:
                     return None
@@ -853,11 +907,19 @@ class DroneRuntime:
         return DronePhoto(file_path=file_path, url=f"/uploads/{file_path}")
 
     def close(self) -> None:
-        with self.lock:
+        with self.frame_condition:
             session = self.session
             self.session = None
+            self.frame_condition.notify_all()
         if session is not None:
             session.close()
+
+    def _is_running_locked(self) -> bool:
+        return self.session is not None and self.session.running
+
+    def is_running(self) -> bool:
+        with self.lock:
+            return self._is_running_locked()
 
     def status(self) -> dict[str, object]:
         with self.lock:
@@ -873,19 +935,27 @@ class DroneRuntime:
             }
 
 
-def mjpeg_frame_generator(drone_runtime: DroneRuntime) -> Iterator[bytes]:
-    drone_runtime.ensure_started()
-    last_seen = 0
-    boundary = b"--frame\r\n"
-    while True:
-        item = drone_runtime.wait_for_frame(last_seen=last_seen, timeout=5.0)
-        if item is None:
-            continue
-        last_seen, jpeg = item
-        yield (
-            boundary
-            + b"Content-Type: image/jpeg\r\n"
-            + f"Content-Length: {len(jpeg)}\r\n\r\n".encode("ascii")
-            + jpeg
-            + b"\r\n"
-        )
+async def mjpeg_frame_generator(
+    drone_runtime: DroneRuntime,
+    is_disconnected: Callable[[], Awaitable[bool]] | None = None,
+) -> AsyncIterator[bytes]:
+    try:
+        await asyncio.to_thread(drone_runtime.ensure_started)
+        last_seen = 0
+        boundary = b"--frame\r\n"
+        while drone_runtime.is_running():
+            if is_disconnected is not None and await is_disconnected():
+                break
+            item = await asyncio.to_thread(drone_runtime.wait_for_frame, last_seen, 0.5)
+            if item is None:
+                continue
+            last_seen, jpeg = item
+            yield (
+                boundary
+                + b"Content-Type: image/jpeg\r\n"
+                + f"Content-Length: {len(jpeg)}\r\n\r\n".encode("ascii")
+                + jpeg
+                + b"\r\n"
+            )
+    except asyncio.CancelledError:
+        return

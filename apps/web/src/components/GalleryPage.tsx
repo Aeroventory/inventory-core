@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ImageIcon, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
+import { ImageIcon, RefreshCw, Search, Trash2, UploadCloud, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
@@ -9,6 +9,7 @@ import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import CameraCaptureButton from "@/components/CameraCaptureButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,8 @@ export default function GalleryPage() {
   const { i18n, t } = useTranslation();
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [query, setQuery] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pondFiles, setPondFiles] = useState<File[]>([]);
+  const [cameraFiles, setCameraFiles] = useState<File[]>([]);
   const [pondKey, setPondKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -41,6 +43,8 @@ export default function GalleryPage() {
         .includes(normalized),
     );
   }, [assets, query]);
+
+  const pendingFiles = useMemo(() => [...pondFiles, ...cameraFiles], [cameraFiles, pondFiles]);
 
   const fetchAssets = () => {
     setLoading(true);
@@ -66,7 +70,8 @@ export default function GalleryPage() {
     try {
       const res = await uploadMediaAssets(pendingFiles);
       setAssets((current) => [...res.data, ...current]);
-      setPendingFiles([]);
+      setPondFiles([]);
+      setCameraFiles([]);
       setPondKey((value) => value + 1);
       toast.success(t("gallery.success.upload", { count: res.data.length }));
     } catch {
@@ -119,20 +124,47 @@ export default function GalleryPage() {
           <CardTitle>{t("gallery.uploadTitle")}</CardTitle>
           <CardDescription>{t("gallery.uploadDescription")}</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-          <FilePond
-            key={pondKey}
-            allowMultiple
-            acceptedFileTypes={["image/*"]}
-            labelIdle={t("gallery.filePondLabel")}
-            onupdatefiles={(fileItems) => {
-              setPendingFiles(fileItems.map((item) => item.file as File).filter(Boolean));
-            }}
-          />
-          <Button onClick={handleUpload} disabled={pendingFiles.length === 0 || uploading}>
-            <UploadCloud size={16} />
-            {t("gallery.upload")}
-          </Button>
+        <CardContent className="space-y-3">
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+            <FilePond
+              key={pondKey}
+              allowMultiple
+              acceptedFileTypes={["image/*"]}
+              labelIdle={t("gallery.filePondLabel")}
+              onupdatefiles={(fileItems) => {
+                setPondFiles(fileItems.map((item) => item.file as File).filter(Boolean));
+              }}
+            />
+            <CameraCaptureButton
+              filenamePrefix="camera-gallery"
+              buttonLabel={t("camera.actions.open")}
+              title={t("camera.galleryTitle")}
+              disabled={uploading}
+              onCapture={(file) => setCameraFiles((current) => [...current, file])}
+            />
+            <Button onClick={handleUpload} disabled={pendingFiles.length === 0 || uploading}>
+              <UploadCloud size={16} />
+              {t("gallery.upload")}
+            </Button>
+          </div>
+          {cameraFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Badge tone="blue">{t("camera.capturedCount", { count: cameraFiles.length })}</Badge>
+              {cameraFiles.map((file, index) => (
+                <span key={`${file.name}-${index}`} className="inline-flex max-w-full items-center gap-2 rounded-xl border border-[#D9E4DD] bg-[#F7FAF8] px-3 py-1.5 text-[#10231B]">
+                  <span className="max-w-[220px] truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    className="text-[#5B6B63] hover:text-[#B91C1C]"
+                    aria-label={t("camera.actions.removeCaptured")}
+                    onClick={() => setCameraFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                  >
+                    <X size={13} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

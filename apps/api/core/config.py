@@ -29,11 +29,10 @@ class Settings(BaseSettings):
     DRONE_SPEED: int = 30
     DRONE_AXIS_DELTA: int = 90
     DRONE_HOVER_THROTTLE: int = 128
-    DRONE_TRIM_AIL: int = 164
-    DRONE_TRIM_ELE: int = 128
+    DRONE_TRIM_AIL: int = 130
+    DRONE_TRIM_ELE: int = 130
     DRONE_TRIM_RUDD: int = 128
     DRONE_SEND_INTERVAL: float = 0.04
-    DRONE_STREAM_TOKEN_TTL_SECONDS: int = 180
 
     # Vision service
     VISION_SERVICE_URL: str = "http://vision:8001"
