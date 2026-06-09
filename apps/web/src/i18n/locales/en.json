@@ -405,6 +405,29 @@
         "productCreate": "Failed to create product from the AI row."
       }
     },
+    "drone": {
+      "openButton": "Drone Snapshot",
+      "title": "Drone Snapshot",
+      "description": "Fly or photograph with the drone, send captured frames to Gemini, review the rows, then save a drone snapshot.",
+      "defaultName": "Drone Snapshot {{date}}",
+      "namePlaceholder": "e.g. Drone Count May 2026",
+      "emptyRows": "Capture drone photos and run analysis to review detected boxes.",
+      "photosTitle": "Drone photos",
+      "emptyPhotos": "No drone photos captured yet.",
+      "photoBadge_one": "{{count}} photo",
+      "photoBadge_other": "{{count}} photos",
+      "success_one": "Drone snapshot \"{{name}}\" created with {{count}} row.",
+      "success_other": "Drone snapshot \"{{name}}\" created with {{count}} rows.",
+      "actions": {
+        "analyze": "Analyze drone photos",
+        "create": "Create Drone Snapshot"
+      },
+      "errors": {
+        "photoRequired": "Capture at least one drone photo before analyzing.",
+        "analyze": "Gemini could not analyze the drone photos.",
+        "create": "Failed to create drone snapshot."
+      }
+    },
     "boxes": {
       "title": "Inventory boxes",
       "description": "Manage the active box pool before capturing snapshots.",
@@ -439,7 +462,8 @@
     },
     "source": {
       "manual": "Manual",
-      "drone": "AI Vision"
+      "AI": "AI",
+      "drone": "Drone"
     },
     "list": {
       "error": "Failed to load snapshots from the API.",

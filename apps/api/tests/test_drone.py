@@ -1,10 +1,11 @@
 from types import SimpleNamespace
+import time
 
 import pytest
 from fastapi import HTTPException
 
 import routers.drone as drone_router
-from services.drone_mission import parse_mission_script
+from services.drone_mission import MissionController, parse_mission_script
 
 
 def register_first_admin(client, username="admin", password="secret-password"):
@@ -141,6 +142,54 @@ def test_photo_endpoint_returns_saved_path_without_drone_hardware(client, monkey
         "file_path": "drone/photo.jpg",
         "url": "/uploads/drone/photo.jpg",
     }
+
+
+def test_mission_status_tracks_multiple_photos():
+    class FakeRuntime:
+        def __init__(self):
+            self.config = SimpleNamespace(axis_delta=90)
+            self.photo_count = 0
+
+        def status(self):
+            return {"connected": True}
+
+        def ensure_started(self):
+            return None
+
+        def neutral_for(self, seconds, label=""):
+            return None
+
+        def send_for(self, state, seconds, label=""):
+            return None
+
+        def capture_photo(self):
+            self.photo_count += 1
+            return SimpleNamespace(
+                file_path=f"drone/photo-{self.photo_count}.jpg",
+                url=f"/uploads/drone/photo-{self.photo_count}.jpg",
+            )
+
+        def emergency(self, seconds=1.0):
+            return None
+
+    controller = MissionController(FakeRuntime())
+    response = controller.start("photo\nphoto")
+    assert response == {"state": "running", "steps": 2}
+
+    deadline = time.time() + 2
+    status = controller.status()
+    while status["state"] == "running" and time.time() < deadline:
+        time.sleep(0.01)
+        status = controller.status()
+
+    assert status["state"] == "done"
+    assert status["last_photo_path"] == "drone/photo-2.jpg"
+    assert status["last_photo_url"] == "/uploads/drone/photo-2.jpg"
+    assert status["photo_paths"] == ["drone/photo-1.jpg", "drone/photo-2.jpg"]
+    assert status["photo_urls"] == [
+        "/uploads/drone/photo-1.jpg",
+        "/uploads/drone/photo-2.jpg",
+    ]
 
 
 def test_connect_endpoint_attempts_drone_connection(client, monkeypatch):

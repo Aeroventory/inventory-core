@@ -1,4 +1,6 @@
+import mimetypes
 from datetime import date, datetime
+from pathlib import Path
 from uuid import uuid4
 
 from sqlalchemy.orm import Session, joinedload
@@ -7,17 +9,18 @@ from fastapi import HTTPException, status
 from models.inventory_box import InventoryBox
 from models.inventory_snapshot import InventorySnapshot
 from models.inventory_snapshot_item import InventorySnapshotItem
-from models.media import ProductMediaAsset, SnapshotMediaAsset
+from models.media import MediaAsset, ProductMediaAsset, SnapshotMediaAsset
 from models.product import Product
 from schemas.inventory_snapshot import (
     AiSnapshotAnalysisRow,
     AiSnapshotBoxPreview,
     AiSnapshotCreate,
+    DroneSnapshotCreate,
     SnapshotCreate,
     SnapshotItemCreate,
     SnapshotItemUpdate,
 )
-from services.file_service import save_file
+from services.file_service import UPLOADS_DIR, save_file
 
 
 def _snapshot_created_at(snapshot_date: date | None) -> datetime:
@@ -36,6 +39,45 @@ def _normalize_box_code(box_code: str | None) -> str | None:
         return None
     normalized = box_code.strip()
     return normalized or None
+
+
+def validate_drone_image_paths(image_paths: list[str]) -> list[str]:
+    if not image_paths:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one drone image is required",
+        )
+
+    drone_dir = (UPLOADS_DIR / "drone").resolve()
+    normalized_paths: list[str] = []
+    seen_paths: set[str] = set()
+
+    for image_path in image_paths:
+        normalized = str(image_path).strip().lstrip("/")
+        if normalized.startswith("uploads/"):
+            normalized = normalized.removeprefix("uploads/")
+        if not normalized.startswith("drone/"):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Drone snapshot images must be under uploads/drone",
+            )
+
+        candidate = (UPLOADS_DIR / normalized).resolve()
+        if not candidate.is_relative_to(drone_dir) or not candidate.is_file():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Drone image not found: {normalized}",
+            )
+        if normalized in seen_paths:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Duplicate drone image path: {normalized}",
+            )
+
+        seen_paths.add(normalized)
+        normalized_paths.append(normalized)
+
+    return normalized_paths
 
 
 def _snapshot_query(db: Session):
@@ -183,26 +225,37 @@ def _expected_removed_box_ids(db: Session, rows: list[AiSnapshotAnalysisRow]) ->
     }
 
 
-def create_ai_snapshot(db: Session, snapshot_in: AiSnapshotCreate) -> InventorySnapshot:
-    product_by_id = _validate_ai_rows(db, snapshot_in.rows)
-    expected_removed_ids = _expected_removed_box_ids(db, snapshot_in.rows)
-    confirmed_removed_ids = set(snapshot_in.confirmed_removed_box_ids)
+def _validate_removed_confirmation(
+    db: Session,
+    rows: list[AiSnapshotAnalysisRow],
+    confirmed_removed_box_ids: list[int],
+) -> set[int]:
+    expected_removed_ids = _expected_removed_box_ids(db, rows)
+    confirmed_removed_ids = set(confirmed_removed_box_ids)
 
     if expected_removed_ids != confirmed_removed_ids:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
-                "message": "Active inventory changed during AI review",
+                "message": "Active inventory changed during review",
                 "expected_removed_box_ids": sorted(expected_removed_ids),
             },
         )
 
-    file_path = save_file(snapshot_in.temp_filename, folder="snapshots")
+    return expected_removed_ids
+
+
+def _sync_reviewed_rows(
+    db: Session,
+    rows: list[AiSnapshotAnalysisRow],
+    snapshot_date: date,
+    product_by_id: dict[int, Product],
+) -> dict[str, float | None]:
     confidence_by_box_code: dict[str, float | None] = {}
 
-    for row in snapshot_in.rows:
+    for row in rows:
         product = product_by_id[row.product_id]
-        box_date = row.box_date or snapshot_in.snapshot_date
+        box_date = row.box_date or snapshot_date
         box_code = _normalize_box_code(row.box_code) or _generate_box_code(
             product, box_date
         )
@@ -224,6 +277,10 @@ def create_ai_snapshot(db: Session, snapshot_in: AiSnapshotCreate) -> InventoryS
             box.removed_at = None
         confidence_by_box_code[box_code] = row.confidence_score
 
+    return confidence_by_box_code
+
+
+def _soft_remove_expected_boxes(db: Session, expected_removed_ids: set[int]) -> None:
     if expected_removed_ids:
         (
             db.query(InventoryBox)
@@ -237,14 +294,89 @@ def create_ai_snapshot(db: Session, snapshot_in: AiSnapshotCreate) -> InventoryS
             )
         )
 
+
+def _ensure_snapshot_media_asset(db: Session, image_path: str) -> MediaAsset:
+    asset = db.query(MediaAsset).filter(MediaAsset.file_path == image_path).first()
+    if asset is not None:
+        return asset
+
+    absolute_path = UPLOADS_DIR / image_path
+    asset = MediaAsset(
+        file_path=image_path,
+        original_filename=Path(image_path).name,
+        content_type=mimetypes.guess_type(image_path)[0],
+        size_bytes=absolute_path.stat().st_size if absolute_path.exists() else 0,
+    )
+    db.add(asset)
+    db.flush()
+    return asset
+
+
+def _attach_snapshot_images(
+    db: Session, snapshot: InventorySnapshot, image_paths: list[str]
+) -> None:
+    for index, image_path in enumerate(image_paths):
+        asset = _ensure_snapshot_media_asset(db, image_path)
+        db.add(
+            SnapshotMediaAsset(
+                snapshot_id=snapshot.id,
+                media_asset_id=asset.id,
+                sort_order=index,
+                is_primary=index == 0,
+            )
+        )
+
+
+def create_ai_snapshot(db: Session, snapshot_in: AiSnapshotCreate) -> InventorySnapshot:
+    product_by_id = _validate_ai_rows(db, snapshot_in.rows)
+    expected_removed_ids = _validate_removed_confirmation(
+        db, snapshot_in.rows, snapshot_in.confirmed_removed_box_ids
+    )
+
+    file_path = save_file(snapshot_in.temp_filename, folder="snapshots")
+    confidence_by_box_code = _sync_reviewed_rows(
+        db, snapshot_in.rows, snapshot_in.snapshot_date, product_by_id
+    )
+    _soft_remove_expected_boxes(db, expected_removed_ids)
+
     snapshot = InventorySnapshot(
         name=snapshot_in.name,
         file_path=file_path,
         created_at=_snapshot_created_at(snapshot_in.snapshot_date),
-        is_manual=False,
+        snapshot_type="AI",
     )
     db.add(snapshot)
     db.flush()
+
+    _capture_active_boxes(db, snapshot, confidence_by_box_code)
+
+    db.commit()
+    db.refresh(snapshot)
+    return get_snapshot_by_id(db, snapshot.id)
+
+
+def create_drone_snapshot(
+    db: Session, snapshot_in: DroneSnapshotCreate
+) -> InventorySnapshot:
+    image_paths = validate_drone_image_paths(snapshot_in.image_paths)
+    product_by_id = _validate_ai_rows(db, snapshot_in.rows)
+    expected_removed_ids = _validate_removed_confirmation(
+        db, snapshot_in.rows, snapshot_in.confirmed_removed_box_ids
+    )
+    confidence_by_box_code = _sync_reviewed_rows(
+        db, snapshot_in.rows, snapshot_in.snapshot_date, product_by_id
+    )
+    _soft_remove_expected_boxes(db, expected_removed_ids)
+
+    snapshot = InventorySnapshot(
+        name=snapshot_in.name,
+        file_path=image_paths[0],
+        created_at=_snapshot_created_at(snapshot_in.snapshot_date),
+        snapshot_type="drone",
+    )
+    db.add(snapshot)
+    db.flush()
+    _attach_snapshot_images(db, snapshot, image_paths)
 
     _capture_active_boxes(db, snapshot, confidence_by_box_code)
 
@@ -346,7 +478,7 @@ def create_snapshot(db: Session, snapshot_in: SnapshotCreate) -> InventorySnapsh
         name=snapshot_in.name,
         file_path=snapshot_in.file_path,
         created_at=_snapshot_created_at(snapshot_in.snapshot_date),
-        is_manual=snapshot_in.is_manual,
+        snapshot_type=snapshot_in.snapshot_type,
     )
     db.add(snapshot)
     db.flush()
@@ -384,7 +516,7 @@ def ingest_snapshot(
         name=name,
         file_path=file_path,
         created_at=_snapshot_created_at(capture_date),
-        is_manual=False,
+        snapshot_type="AI",
     )
     db.add(snapshot)
     db.flush()

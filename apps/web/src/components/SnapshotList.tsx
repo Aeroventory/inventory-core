@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Snapshot } from "@/models/Snapshot";
+import type { SnapshotType } from "@/dtos/SnapshotDTO";
 import { getSnapshots } from "@/services/snapshot-endpoints";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8003";
@@ -19,6 +20,12 @@ function confidenceTone(confidence?: number | null): "green" | "warning" | "dang
   if (confidence >= 0.85) return "green";
   if (confidence >= 0.65) return "warning";
   return "danger";
+}
+
+function sourceTone(snapshotType: SnapshotType): "purple" | "blue" | "green" {
+  if (snapshotType === "manual") return "purple";
+  if (snapshotType === "AI") return "blue";
+  return "green";
 }
 
 interface SnapshotListProps {
@@ -127,8 +134,8 @@ export default function SnapshotList({ refreshKey = 0 }: SnapshotListProps) {
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge tone={snapshot.is_manual ? "purple" : "blue"}>
-                            {snapshot.is_manual ? t("snapshots.source.manual") : t("snapshots.source.drone")}
+                          <Badge tone={sourceTone(snapshot.snapshot_type)}>
+                            {t(`snapshots.source.${snapshot.snapshot_type}`)}
                           </Badge>
                           <Badge tone="blue">{t("common.formats.boxes", { count: snapshot.items.length })}</Badge>
                           <Badge tone="green">{t("common.formats.units", { count: totalQuantity })}</Badge>

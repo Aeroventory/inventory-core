@@ -1,9 +1,12 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 from schemas.media import MediaAssetResponse
+
+
+SnapshotType = Literal["manual", "AI", "drone"]
 
 
 # --- Nested DTOs for responses ---
@@ -44,7 +47,7 @@ class SnapshotCreate(BaseModel):
     name: str
     file_path: Optional[str] = None
     snapshot_date: Optional[date] = None
-    is_manual: bool = True
+    snapshot_type: SnapshotType = "manual"
     removed_box_ids: list[int] = Field(default_factory=list)
 
 
@@ -116,13 +119,35 @@ class AiSnapshotCreate(BaseModel):
     confirmed_removed_box_ids: list[int] = Field(default_factory=list)
 
 
+class DroneSnapshotAnalyze(BaseModel):
+    image_paths: list[str] = Field(min_length=1)
+
+
+class DroneSnapshotAnalyzeResponse(BaseModel):
+    image_paths: list[str]
+    detections: list[AiSnapshotAnalysisRow]
+    unmatched: list[AiSnapshotAnalysisRow] = Field(default_factory=list)
+    active_boxes: list[AiSnapshotBoxPreview] = Field(default_factory=list)
+    removed_boxes: list[AiSnapshotBoxPreview] = Field(default_factory=list)
+    raw_json: dict = Field(default_factory=dict)
+    model_version: Optional[str] = None
+
+
+class DroneSnapshotCreate(BaseModel):
+    name: str
+    snapshot_date: date
+    image_paths: list[str] = Field(min_length=1)
+    rows: list[AiSnapshotAnalysisRow]
+    confirmed_removed_box_ids: list[int] = Field(default_factory=list)
+
+
 # --- Response DTOs ---
 
 class SnapshotResponse(BaseModel):
     id: int
     name: str
     created_at: datetime
-    is_manual: bool
+    snapshot_type: SnapshotType
     file_path: Optional[str] = None
     images: list[MediaAssetResponse] = Field(default_factory=list)
     primary_image: Optional[MediaAssetResponse] = None

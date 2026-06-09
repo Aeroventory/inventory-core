@@ -32,7 +32,6 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
   const { t } = useTranslation();
   const [name, setName] = useState("");
   const [snapshotDate, setSnapshotDate] = useState(todayIso);
-  const [isManual, setIsManual] = useState(true);
   const [filePath, setFilePath] = useState<string | null>(null);
   const [_tempFilename, setTempFilename] = useState<string | null>(null);
   const [stagedRemovedBoxIds, setStagedRemovedBoxIds] = useState<number[]>([]);
@@ -83,14 +82,13 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
         name: name.trim(),
         file_path: filePath,
         snapshot_date: snapshotDate,
-        is_manual: isManual,
+        snapshot_type: "manual",
         removed_box_ids: Array.from(new Set(stagedRemovedBoxIds)),
       });
 
       toast.success(t("snapshots.form.success", { name: name.trim(), count: snapshotRes.data.items.length }));
       setName("");
       setSnapshotDate(todayIso());
-      setIsManual(true);
       setFilePath(null);
       setTempFilename(null);
       setStagedRemovedBoxIds([]);
@@ -117,9 +115,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
             <Badge tone={filePath ? "green" : "neutral"}>
               {filePath ? t("common.badges.imageSaved") : t("common.badges.imagePending")}
             </Badge>
-            <Badge tone={isManual ? "purple" : "blue"}>
-              {isManual ? t("snapshots.source.manual") : t("snapshots.source.drone")}
-            </Badge>
+            <Badge tone="purple">{t("snapshots.source.manual")}</Badge>
           </div>
         </div>
       </CardHeader>
@@ -136,7 +132,7 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
             <Input value={name} onChange={(event) => setName(event.target.value)} placeholder={t("snapshots.form.snapshotNamePlaceholder")} />
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div className="grid gap-3 sm:grid-cols-[1fr] sm:items-end">
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotDate")}</span>
               <Input
@@ -146,25 +142,6 @@ export default function SnapshotForm({ onSaved }: SnapshotFormProps) {
                 onChange={(event) => setSnapshotDate(event.target.value)}
               />
             </label>
-            <div>
-              <span className="mb-1.5 block text-xs font-medium uppercase text-[#5B6B63]">{t("snapshots.form.snapshotSource")}</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isManual}
-                className="flex h-10 min-w-[170px] items-center justify-between gap-3 rounded-xl border border-[#D9E4DD] bg-white px-3 text-sm font-semibold text-[#10231B] outline-none transition focus:border-[#00684A] focus:ring-4 focus:ring-[rgba(0,104,74,0.12)]"
-                onClick={() => setIsManual((value) => !value)}
-              >
-                <span>{isManual ? t("snapshots.source.manual") : t("snapshots.source.drone")}</span>
-                <span
-                  className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${
-                    isManual ? "justify-end bg-[#00684A]" : "justify-start bg-[#94A3B8]"
-                  }`}
-                >
-                  <span className="h-4 w-4 rounded-full bg-white shadow-sm" />
-                </span>
-              </button>
-            </div>
           </div>
 
           <div>

@@ -41,6 +41,8 @@ class MissionController:
         self.current_step = ""
         self.last_photo_path: str | None = None
         self.last_photo_url: str | None = None
+        self.photo_paths: list[str] = []
+        self.photo_urls: list[str] = []
         self.started_at: float | None = None
         self.finished_at: float | None = None
 
@@ -52,6 +54,8 @@ class MissionController:
                 "current_step": self.current_step,
                 "last_photo_path": self.last_photo_path,
                 "last_photo_url": self.last_photo_url,
+                "photo_paths": list(self.photo_paths),
+                "photo_urls": list(self.photo_urls),
                 "started_at": self.started_at,
                 "finished_at": self.finished_at,
                 "drone": self.runtime.status(),
@@ -68,6 +72,8 @@ class MissionController:
             self.current_step = ""
             self.last_photo_path = None
             self.last_photo_url = None
+            self.photo_paths = []
+            self.photo_urls = []
             self.started_at = time.time()
             self.finished_at = None
             self.thread = threading.Thread(target=self._run, args=(steps,), daemon=True)
@@ -147,6 +153,8 @@ class MissionController:
             with self.lock:
                 self.last_photo_path = photo.file_path
                 self.last_photo_url = photo.url
+                self.photo_paths.append(photo.file_path)
+                self.photo_urls.append(photo.url)
                 self.message = f"Saved photo: {photo.file_path}"
         elif command == "emergency":
             self.runtime.emergency(seconds if seconds is not None else 1.0)

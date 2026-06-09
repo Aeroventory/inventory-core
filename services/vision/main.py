@@ -107,13 +107,24 @@ def _read_products(product_catalog: str) -> list[ProductContext]:
     return [ProductContext(**product) for product in raw_products]
 
 
-def _prompt(products: list[ProductContext]) -> str:
+def _prompt(products: list[ProductContext], image_count: int = 1) -> str:
     product_json = json.dumps(
         [product.model_dump(exclude_none=True) for product in products],
         ensure_ascii=False,
     )
+    subject = (
+        "these inventory snapshot images"
+        if image_count > 1
+        else "this inventory snapshot image"
+    )
+    multi_image_rules = (
+        "\n- The supplied images are from one drone inventory capture. Merge them into one result set."
+        "\n- If the same visible box appears in multiple images, return it once. Use box_code as the strongest dedupe key."
+        if image_count > 1
+        else ""
+    )
     return f"""
-Analyze this inventory snapshot image and extract box-level inventory rows.
+Analyze {subject} and extract box-level inventory rows.
 
 Known product catalog:
 {product_json}
@@ -130,6 +141,7 @@ Rules:
 - Use location_site, location_aisle, and location_rack for structured visible location text instead of burying it only in notes.
 - confidence_score must be between 0 and 1.
 - Return only JSON matching the response schema.
+{multi_image_rules}
 """.strip()
 
 
@@ -157,14 +169,28 @@ def _analyze_with_gemini(
     mime_type: str,
     products: list[ProductContext],
 ) -> AnalyzeResponse:
+    return _analyze_with_gemini_images([(image_bytes, mime_type)], products)
+
+
+def _analyze_with_gemini_images(
+    images: list[tuple[bytes, str]],
+    products: list[ProductContext],
+) -> AnalyzeResponse:
     from google.genai import types
 
+    if not images:
+        raise HTTPException(status_code=400, detail="At least one image is required")
+
     client = _gemini_client()
+    image_parts = [
+        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+        for image_bytes, mime_type in images
+    ]
     response = client.models.generate_content(
         model=DEFAULT_MODEL,
         contents=[
-            types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-            _prompt(products),
+            *image_parts,
+            _prompt(products, image_count=len(images)),
         ],
         config={
             "response_mime_type": "application/json",
@@ -193,6 +219,12 @@ def _analyze_with_gemini(
     )
 
 
+async def _read_uploaded_image(file: UploadFile) -> tuple[bytes, str]:
+    image_bytes = await file.read()
+    mime_type = file.content_type or mimetypes.guess_type(file.filename or "")[0]
+    return image_bytes, mime_type or "image/jpeg"
+
+
 async def _read_image(file: Optional[UploadFile], image_url: Optional[str]) -> tuple[bytes, str]:
     if file is None and image_url is None:
         raise HTTPException(
@@ -201,9 +233,7 @@ async def _read_image(file: Optional[UploadFile], image_url: Optional[str]) -> t
         )
 
     if file is not None:
-        image_bytes = await file.read()
-        mime_type = file.content_type or mimetypes.guess_type(file.filename or "")[0]
-        return image_bytes, mime_type or "image/jpeg"
+        return await _read_uploaded_image(file)
 
     import httpx
 
@@ -227,6 +257,37 @@ async def analyze(
             _analyze_with_gemini,
             image_bytes,
             mime_type,
+            products,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        status_code = getattr(exc, "status_code", 502)
+        message = str(exc)
+        if status_code == 429 or "RESOURCE_EXHAUSTED" in message:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini quota or billing is exhausted. Check Google AI Studio billing/credits for this API key.",
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini analysis failed: {message}",
+        )
+
+
+@app.post("/analyze/batch", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
+async def analyze_batch(
+    files: list[UploadFile] = File(...),
+    product_catalog: str = Form("[]"),
+):
+    products = _read_products(product_catalog)
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one image is required")
+    images = [await _read_uploaded_image(file) for file in files]
+    try:
+        return await asyncio.to_thread(
+            _analyze_with_gemini_images,
+            images,
             products,
         )
     except HTTPException:

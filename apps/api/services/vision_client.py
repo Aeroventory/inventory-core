@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 import json
 import mimetypes
 from pathlib import Path
@@ -57,6 +58,57 @@ async def call_vision_ai_analyze(
                     url,
                     data={"product_catalog": json.dumps(product_catalog)},
                     files={"file": (path.name, f, mime_type)},
+                )
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=502,
+            detail="Vision service is unavailable",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to reach vision service: {str(e)}",
+        )
+
+    if response.status_code != 200:
+        detail = f"Vision service returned status {response.status_code}"
+        try:
+            error_data = response.json()
+            detail = error_data.get("detail", detail)
+        except ValueError:
+            pass
+        status_code = response.status_code if response.status_code in {400, 401, 403, 404, 409, 422, 429} else 502
+        raise HTTPException(status_code=status_code, detail=detail)
+
+    return response.json()
+
+
+async def call_vision_ai_analyze_batch(
+    file_paths: list[str], product_catalog: list[dict]
+) -> dict:
+    """Call the vision service Gemini analysis endpoint with multiple images."""
+    if not file_paths:
+        raise HTTPException(status_code=400, detail="At least one image is required")
+
+    url = f"{settings.VISION_SERVICE_URL}/analyze/batch"
+
+    try:
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            with ExitStack() as stack:
+                files = []
+                for file_path in file_paths:
+                    path = Path(file_path)
+                    mime_type = (
+                        mimetypes.guess_type(path.name)[0]
+                        or "application/octet-stream"
+                    )
+                    file_handle = stack.enter_context(open(path, "rb"))
+                    files.append(("files", (path.name, file_handle, mime_type)))
+
+                response = await client.post(
+                    url,
+                    data={"product_catalog": json.dumps(product_catalog)},
+                    files=files,
                 )
     except httpx.ConnectError:
         raise HTTPException(

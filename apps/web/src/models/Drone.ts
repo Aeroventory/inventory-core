@@ -15,6 +15,8 @@ export interface DroneMissionStatus {
   current_step?: string;
   last_photo_path?: string | null;
   last_photo_url?: string | null;
+  photo_paths?: string[];
+  photo_urls?: string[];
   started_at?: number | null;
   finished_at?: number | null;
   drone?: DroneRuntimeStatus;

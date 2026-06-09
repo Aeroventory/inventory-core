@@ -405,6 +405,29 @@
         "productCreate": "AI satırından ürün oluşturulamadı."
       }
     },
+    "drone": {
+      "openButton": "Drone sayımı",
+      "title": "Drone sayımı",
+      "description": "Drone ile uçuş veya fotoğraf çekimi yapın, görüntüleri Gemini'ye gönderin, satırları inceleyin ve drone sayımını kaydedin.",
+      "defaultName": "Drone sayımı {{date}}",
+      "namePlaceholder": "örn. Drone Mayıs 2026 Sayımı",
+      "emptyRows": "Algılanan kutuları görmek için drone fotoğrafları çekip analizi başlatın.",
+      "photosTitle": "Drone fotoğrafları",
+      "emptyPhotos": "Henüz drone fotoğrafı çekilmedi.",
+      "photoBadge_one": "{{count}} fotoğraf",
+      "photoBadge_other": "{{count}} fotoğraf",
+      "success_one": "\"{{name}}\" drone sayımı {{count}} satırla oluşturuldu.",
+      "success_other": "\"{{name}}\" drone sayımı {{count}} satırla oluşturuldu.",
+      "actions": {
+        "analyze": "Drone fotoğraflarını analiz et",
+        "create": "Drone sayımı oluştur"
+      },
+      "errors": {
+        "photoRequired": "Analizden önce en az bir drone fotoğrafı çekin.",
+        "analyze": "Gemini drone fotoğraflarını analiz edemedi.",
+        "create": "Drone sayımı oluşturulamadı."
+      }
+    },
     "boxes": {
       "title": "Envanter kutuları",
       "description": "Sayım almadan önce aktif kutu havuzunu yönetin.",
@@ -439,7 +462,8 @@
     },
     "source": {
       "manual": "Manuel",
-      "drone": "AI Vision"
+      "AI": "Yapay zeka",
+      "drone": "Drone"
     },
     "list": {
       "error": "Sayım kayıtları API'den yüklenemedi.",

@@ -6,6 +6,7 @@ inventory detections from images.
 ## Endpoints
 
 - `POST /analyze` — Accept an image file or image URL plus product catalog JSON, return matched and unmatched detections
+- `POST /analyze/batch` — Accept multiple image files plus product catalog JSON, merge them into one deduplicated inventory result
 - `POST /infer` — Legacy compatibility endpoint that returns detection results
 - `GET /health` — Health check
 

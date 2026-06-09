@@ -1,8 +1,10 @@
+export type SnapshotType = "manual" | "AI" | "drone";
+
 export interface SnapshotCreateDTO {
   name: string;
   file_path?: string | null;
   snapshot_date: string;
-  is_manual: boolean;
+  snapshot_type?: SnapshotType;
   removed_box_ids?: number[];
 }
 
@@ -50,6 +52,24 @@ export interface AiSnapshotCreateDTO {
   name: string;
   snapshot_date: string;
   temp_filename: string;
+  rows: AiSnapshotRowDTO[];
+  confirmed_removed_box_ids: number[];
+}
+
+export interface DroneSnapshotAnalyzeResponseDTO {
+  image_paths: string[];
+  detections: AiSnapshotRowDTO[];
+  unmatched: AiSnapshotRowDTO[];
+  active_boxes: AiSnapshotBoxPreviewDTO[];
+  removed_boxes: AiSnapshotBoxPreviewDTO[];
+  raw_json: Record<string, unknown>;
+  model_version?: string | null;
+}
+
+export interface DroneSnapshotCreateDTO {
+  name: string;
+  snapshot_date: string;
+  image_paths: string[];
   rows: AiSnapshotRowDTO[];
   confirmed_removed_box_ids: number[];
 }
