@@ -99,7 +99,8 @@ All configuration is managed through the root `.env` file:
 | `VITE_API_URL`                     | `http://localhost:8003`         | API URL for the frontend                      |
 | `VISION_SERVICE_URL`               | `http://vision:8001`            | Vision service URL used by the API            |
 | `GEMINI_API_KEY`                   | —                               | Google AI Studio key for vision analysis      |
-| `GEMINI_MODEL`                     | `gemini-3.5-flash`              | Gemini model used by the vision service       |
+| `GEMINI_MODEL`                     | `gemini-3.5-flash`              | Primary Gemini model used by vision analysis  |
+| `GEMINI_FALLBACK_MODELS`           | `gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite` | Comma-separated Gemini fallbacks for transient provider errors |
 | `DRONE_HOST`                       | `192.168.1.1`                   | Drone control host/IP                         |
 | `DRONE_RTSP_PORT`                  | `7070`                          | Drone RTSP camera port                        |
 | `DRONE_RTSP_URL`                   | `rtsp://192.168.1.1:7070/webcam` | Drone camera stream URL                       |

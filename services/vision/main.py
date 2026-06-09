@@ -11,6 +11,14 @@ from schemas import AnalyzeResponse, Detection, InferResponse, InventoryDetectio
 app = FastAPI(title="Vision Inference Service", version="0.1.0")
 
 DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+FALLBACK_MODELS = [
+    model.strip()
+    for model in os.getenv(
+        "GEMINI_FALLBACK_MODELS",
+        "gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite",
+    ).split(",")
+    if model.strip()
+]
 
 
 GEMINI_RESPONSE_SCHEMA = {
@@ -164,6 +172,37 @@ def _normalize_detection(row: dict) -> InventoryDetection | None:
         return None
 
 
+def _model_candidates() -> list[str]:
+    seen: set[str] = set()
+    models: list[str] = []
+    for model in [DEFAULT_MODEL, *FALLBACK_MODELS]:
+        if model in seen:
+            continue
+        seen.add(model)
+        models.append(model)
+    return models
+
+
+def _is_retryable_model_error(exc: Exception) -> bool:
+    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if status_code in {500, 502, 503, 504}:
+        return True
+
+    message = str(exc)
+    return any(
+        token in message
+        for token in (
+            "UNAVAILABLE",
+            "INTERNAL",
+            "DEADLINE_EXCEEDED",
+            "503",
+            "502",
+            "500",
+            "504",
+        )
+    )
+
+
 def _analyze_with_gemini(
     image_bytes: bytes,
     mime_type: str,
@@ -186,17 +225,37 @@ def _analyze_with_gemini_images(
         types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
         for image_bytes, mime_type in images
     ]
-    response = client.models.generate_content(
-        model=DEFAULT_MODEL,
-        contents=[
-            *image_parts,
-            _prompt(products, image_count=len(images)),
-        ],
-        config={
-            "response_mime_type": "application/json",
-            "response_json_schema": GEMINI_RESPONSE_SCHEMA,
-        },
-    )
+    contents = [
+        *image_parts,
+        _prompt(products, image_count=len(images)),
+    ]
+    config = {
+        "response_mime_type": "application/json",
+        "response_json_schema": GEMINI_RESPONSE_SCHEMA,
+    }
+    errors: list[str] = []
+    used_model: str | None = None
+    response = None
+    for model in _model_candidates():
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config,
+            )
+            used_model = model
+            break
+        except Exception as exc:
+            if not _is_retryable_model_error(exc):
+                raise
+            errors.append(f"{model}: {exc}")
+
+    if response is None or used_model is None:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Gemini models unavailable after fallbacks: {' | '.join(errors)}",
+        )
+
     raw_json = _parse_gemini_json(response.text or "{}")
     raw_detections = raw_json.get("detections", [])
     raw_unmatched = raw_json.get("unmatched", [])
@@ -215,7 +274,7 @@ def _analyze_with_gemini_images(
         detections=detections,
         unmatched=unmatched,
         raw_json=raw_json,
-        model_version=DEFAULT_MODEL,
+        model_version=used_model,
     )
 
 
@@ -339,5 +398,6 @@ def health():
     return {
         "status": "healthy" if configured else "degraded",
         "model_version": DEFAULT_MODEL,
+        "fallback_models": FALLBACK_MODELS,
         "gemini_configured": configured,
     }

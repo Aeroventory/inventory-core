@@ -35,7 +35,8 @@ inventory detections from images.
 ## Configuration
 
 Set `GEMINI_API_KEY` in the repo `.env`. `GEMINI_MODEL` defaults to
-`gemini-3.5-flash`.
+`gemini-3.5-flash`. `GEMINI_FALLBACK_MODELS` is a comma-separated
+fallback chain used for transient provider-side 5xx/unavailable errors.
 
 ## Running
 
