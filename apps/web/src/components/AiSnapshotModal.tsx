@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import CameraCaptureButton from "@/components/CameraCaptureButton";
 import { Input } from "@/components/ui/input";
 import {
   AiSnapshotBoxPreviewDTO,
@@ -86,6 +87,7 @@ export default function AiSnapshotModal({ open, onClose, onSaved }: AiSnapshotMo
   const [snapshotDate, setSnapshotDate] = useState(todayIso);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pondKey, setPondKey] = useState(0);
   const [tempFilename, setTempFilename] = useState<string | null>(null);
   const [rows, setRows] = useState<DraftRow[]>([]);
   const [unmatchedRows, setUnmatchedRows] = useState<DraftRow[]>([]);
@@ -146,6 +148,7 @@ export default function AiSnapshotModal({ open, onClose, onSaved }: AiSnapshotMo
     setSnapshotName("");
     setSnapshotDate(todayIso());
     setFile(null);
+    setPondKey((value) => value + 1);
     setPreviewUrl((current) => {
       if (current) URL.revokeObjectURL(current);
       return null;
@@ -165,6 +168,38 @@ export default function AiSnapshotModal({ open, onClose, onSaved }: AiSnapshotMo
     if (saving || analyzing) return;
     reset();
     onClose();
+  };
+
+  const clearSelectedImage = () => {
+    setFile(null);
+    setTempFilename(null);
+    setRows([]);
+    setUnmatchedRows([]);
+    setProductDrafts({});
+    setProductDraftRowId(null);
+    setCreatingProductRowId(null);
+    setRawJson(null);
+    setModelVersion(null);
+    setPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+  };
+
+  const stageImageFile = (nextFile: File) => {
+    setFile(nextFile);
+    setTempFilename(null);
+    setRows([]);
+    setUnmatchedRows([]);
+    setProductDrafts({});
+    setProductDraftRowId(null);
+    setCreatingProductRowId(null);
+    setRawJson(null);
+    setModelVersion(null);
+    setPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return URL.createObjectURL(nextFile);
+    });
   };
 
   const updateRow = (localId: string, patch: Partial<DraftRow>) => {
@@ -467,41 +502,29 @@ export default function AiSnapshotModal({ open, onClose, onSaved }: AiSnapshotMo
                     <Sparkles size={28} className="text-[#5B6B63]" />
                   )}
                 </div>
-                <FilePond
-                  allowMultiple={false}
-                  acceptedFileTypes={["image/*"]}
-                  labelIdle={t("snapshots.form.filePondLabel")}
-                  onaddfile={(_error, fileItem) => {
-                    if (!fileItem?.file) return;
-                    const nextFile = fileItem.file as File;
-                    setFile(nextFile);
-                    setTempFilename(null);
-                    setRows([]);
-                    setUnmatchedRows([]);
-                    setProductDrafts({});
-                    setProductDraftRowId(null);
-                    setCreatingProductRowId(null);
-                    setRawJson(null);
-                    setPreviewUrl((current) => {
-                      if (current) URL.revokeObjectURL(current);
-                      return URL.createObjectURL(nextFile);
-                    });
-                  }}
-                  onremovefile={() => {
-                    setFile(null);
-                    setPreviewUrl((current) => {
-                      if (current) URL.revokeObjectURL(current);
-                      return null;
-                    });
-                    setTempFilename(null);
-                    setRows([]);
-                    setUnmatchedRows([]);
-                    setProductDrafts({});
-                    setProductDraftRowId(null);
-                    setCreatingProductRowId(null);
-                    setRawJson(null);
-                  }}
-                />
+                <div className="space-y-3">
+                  <FilePond
+                    key={pondKey}
+                    allowMultiple={false}
+                    acceptedFileTypes={["image/*"]}
+                    labelIdle={t("snapshots.form.filePondLabel")}
+                    onaddfile={(_error, fileItem) => {
+                      if (!fileItem?.file) return;
+                      stageImageFile(fileItem.file as File);
+                    }}
+                    onremovefile={clearSelectedImage}
+                  />
+                  <CameraCaptureButton
+                    filenamePrefix="camera-ai-snapshot"
+                    buttonLabel={t("camera.actions.open")}
+                    title={t("camera.aiSnapshotTitle")}
+                    disabled={analyzing || loadingCatalog}
+                    onCapture={(nextFile) => {
+                      stageImageFile(nextFile);
+                      setPondKey((value) => value + 1);
+                    }}
+                  />
+                </div>
                 <Button className="w-full" onClick={handleAnalyze} disabled={analyzing || loadingCatalog || !file}>
                   {analyzing ? <UploadCloud size={18} className="animate-pulse" /> : <Sparkles size={18} />}
                   {analyzing ? t("snapshots.ai.actions.analyzing") : t("snapshots.ai.actions.analyze")}

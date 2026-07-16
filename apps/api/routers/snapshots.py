@@ -13,6 +13,9 @@ from schemas.inventory_snapshot import (
     AiSnapshotBoxPreview,
     AiSnapshotCreate,
     AiSnapshotProductContext,
+    DroneSnapshotAnalyze,
+    DroneSnapshotAnalyzeResponse,
+    DroneSnapshotCreate,
     SnapshotCreate,
     SnapshotResponse,
     SnapshotItemCreate,
@@ -27,15 +30,21 @@ from services.snapshot_services import (
     get_latest_snapshot,
     create_snapshot,
     create_ai_snapshot,
+    create_drone_snapshot,
     get_ai_snapshot_active_box_previews,
     get_ai_snapshot_removed_box_previews,
     ingest_snapshot,
+    validate_drone_image_paths,
     delete_snapshot,
     add_snapshot_item,
     update_snapshot_item,
     delete_snapshot_item,
 )
-from services.vision_client import call_vision_ai_analyze, call_vision_infer
+from services.vision_client import (
+    call_vision_ai_analyze,
+    call_vision_ai_analyze_batch,
+    call_vision_infer,
+)
 from services.file_service import TEMP_DIR, UPLOADS_DIR
 from models.product import Product
 
@@ -222,6 +231,48 @@ def create_from_ai_snapshot(
     _admin_user=Depends(require_admin),
 ):
     return create_ai_snapshot(db, snapshot_in)
+
+
+@router.post("/drone/analyze", response_model=DroneSnapshotAnalyzeResponse)
+async def analyze_drone_snapshot(
+    snapshot_in: DroneSnapshotAnalyze,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
+    """Analyze one or more drone photos with Gemini and return reviewable rows."""
+    image_paths = validate_drone_image_paths(snapshot_in.image_paths)
+    absolute_paths = [str(UPLOADS_DIR / image_path) for image_path in image_paths]
+    vision_response = await call_vision_ai_analyze_batch(
+        absolute_paths, _product_catalog(db)
+    )
+    matched, unmatched = _coerce_ai_rows(
+        db,
+        [
+            *vision_response.get("detections", []),
+            *vision_response.get("unmatched", []),
+        ],
+    )
+    active_boxes = get_ai_snapshot_active_box_previews(db)
+    removed_boxes = get_ai_snapshot_removed_box_previews(db, matched)
+
+    return DroneSnapshotAnalyzeResponse(
+        image_paths=image_paths,
+        detections=matched,
+        unmatched=unmatched,
+        active_boxes=active_boxes,
+        removed_boxes=removed_boxes,
+        raw_json=vision_response.get("raw_json", vision_response),
+        model_version=vision_response.get("model_version"),
+    )
+
+
+@router.post("/drone/create", response_model=SnapshotResponse, status_code=status.HTTP_201_CREATED)
+def create_from_drone_snapshot(
+    snapshot_in: DroneSnapshotCreate,
+    db: Session = Depends(get_db),
+    _admin_user=Depends(require_admin),
+):
+    return create_drone_snapshot(db, snapshot_in)
 
 
 @router.get("/latest", response_model=SnapshotResponse)

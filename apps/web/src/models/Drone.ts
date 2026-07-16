@@ -15,6 +15,8 @@ export interface DroneMissionStatus {
   current_step?: string;
   last_photo_path?: string | null;
   last_photo_url?: string | null;
+  photo_paths?: string[];
+  photo_urls?: string[];
   started_at?: number | null;
   finished_at?: number | null;
   drone?: DroneRuntimeStatus;
@@ -32,10 +34,4 @@ export interface DroneDefaultMissionResponse {
 export interface DronePhotoResponse {
   file_path: string;
   url: string;
-}
-
-export interface DroneStreamTokenResponse {
-  token: string;
-  expires_at: number;
-  ttl_seconds: number;
 }

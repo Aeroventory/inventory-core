@@ -7,16 +7,19 @@ from dataclasses import dataclass
 from fastapi import HTTPException
 
 from services.drone_runtime import DroneRuntime, HtjrPacketState
+from db.session import SessionLocal
+from services.media_service import register_media_asset_from_local
 
 
 DEFAULT_SCRIPT = """takeoff 0.06
-wait 2
-back 0.3
-yaw_left 0.3
-neutral 0.5
-yaw_right 0.5
-wait 0.6
+up 2
+forward 2.5
+yaw_right 0.7
+wait 1
 photo
+wait 1
+yaw_right 0.7
+forward 2.5
 down 3
 emergency 1
 """
@@ -41,6 +44,8 @@ class MissionController:
         self.current_step = ""
         self.last_photo_path: str | None = None
         self.last_photo_url: str | None = None
+        self.photo_paths: list[str] = []
+        self.photo_urls: list[str] = []
         self.started_at: float | None = None
         self.finished_at: float | None = None
 
@@ -52,6 +57,8 @@ class MissionController:
                 "current_step": self.current_step,
                 "last_photo_path": self.last_photo_path,
                 "last_photo_url": self.last_photo_url,
+                "photo_paths": list(self.photo_paths),
+                "photo_urls": list(self.photo_urls),
                 "started_at": self.started_at,
                 "finished_at": self.finished_at,
                 "drone": self.runtime.status(),
@@ -68,6 +75,8 @@ class MissionController:
             self.current_step = ""
             self.last_photo_path = None
             self.last_photo_url = None
+            self.photo_paths = []
+            self.photo_urls = []
             self.started_at = time.time()
             self.finished_at = None
             self.thread = threading.Thread(target=self._run, args=(steps,), daemon=True)
@@ -118,10 +127,18 @@ class MissionController:
 
         if command == "takeoff":
             self.runtime.send_for(HtjrPacketState(flyup=True), seconds if seconds is not None else 0.06, "takeoff")
+        elif command == "up":
+            self.runtime.send_for(HtjrPacketState(flyup=True), require_seconds(step), "up")
         elif command == "wait":
             self.runtime.neutral_for(require_seconds(step), "wait")
         elif command == "neutral":
             self.runtime.neutral_for(require_seconds(step), "neutral")
+        elif command == "forward":
+            self.runtime.send_for(
+                HtjrPacketState(ele=128 + self.runtime.config.axis_delta),
+                require_seconds(step),
+                "forward",
+            )
         elif command == "back":
             self.runtime.send_for(
                 HtjrPacketState(ele=128 - self.runtime.config.axis_delta),
@@ -144,9 +161,18 @@ class MissionController:
             self.runtime.send_for(HtjrPacketState(flydown=True), require_seconds(step), "down")
         elif command == "photo":
             photo = self.runtime.capture_photo()
+            
+            db = SessionLocal()
+            try:
+                register_media_asset_from_local(db, photo.file_path)
+            finally:
+                db.close()
+
             with self.lock:
                 self.last_photo_path = photo.file_path
                 self.last_photo_url = photo.url
+                self.photo_paths.append(photo.file_path)
+                self.photo_urls.append(photo.url)
                 self.message = f"Saved photo: {photo.file_path}"
         elif command == "emergency":
             self.runtime.emergency(seconds if seconds is not None else 1.0)
@@ -163,7 +189,9 @@ def require_seconds(step: MissionStep) -> float:
 def parse_mission_script(script: str) -> list[MissionStep]:
     valid_commands = {
         "takeoff",
+        "up",
         "wait",
+        "forward",
         "back",
         "yaw_left",
         "yaw_right",

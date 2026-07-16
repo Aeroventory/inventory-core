@@ -317,6 +317,36 @@
       "delete": "Image deleted."
     }
   },
+  "camera": {
+    "title": "Camera capture",
+    "galleryTitle": "Capture gallery image",
+    "snapshotTitle": "Capture snapshot image",
+    "aiSnapshotTitle": "Capture AI snapshot image",
+    "previewAlt": "Captured camera photo",
+    "liveLabel": "Live camera preview",
+    "capturedCount_one": "{{count}} camera photo staged",
+    "capturedCount_other": "{{count}} camera photos staged",
+    "actions": {
+      "open": "Use camera",
+      "starting": "Starting camera...",
+      "retry": "Try again",
+      "capture": "Capture photo",
+      "retake": "Retake",
+      "usePhoto": "Use photo",
+      "removeCaptured": "Remove captured photo"
+    },
+    "states": {
+      "notStarted": "Camera is not active."
+    },
+    "errors": {
+      "unsupported": "Camera capture is not supported by this browser.",
+      "permission": "Camera permission was denied. Allow camera access and try again.",
+      "notFound": "No camera was found on this device.",
+      "start": "Could not start the camera.",
+      "capture": "Could not capture a photo.",
+      "noFrame": "Camera is not ready yet."
+    }
+  },
   "snapshots": {
     "page": {
       "badge": "Snapshots API",
@@ -405,6 +435,29 @@
         "productCreate": "Failed to create product from the AI row."
       }
     },
+    "drone": {
+      "openButton": "Drone Snapshot",
+      "title": "Drone Snapshot",
+      "description": "Fly or photograph with the drone, send captured frames to Gemini, review the rows, then save a drone snapshot.",
+      "defaultName": "Drone Snapshot {{date}}",
+      "namePlaceholder": "e.g. Drone Count May 2026",
+      "emptyRows": "Capture drone photos and run analysis to review detected boxes.",
+      "photosTitle": "Drone photos",
+      "emptyPhotos": "No drone photos captured yet.",
+      "photoBadge_one": "{{count}} photo",
+      "photoBadge_other": "{{count}} photos",
+      "success_one": "Drone snapshot \"{{name}}\" created with {{count}} row.",
+      "success_other": "Drone snapshot \"{{name}}\" created with {{count}} rows.",
+      "actions": {
+        "analyze": "Analyze drone photos",
+        "create": "Create Drone Snapshot"
+      },
+      "errors": {
+        "photoRequired": "Capture at least one drone photo before analyzing.",
+        "analyze": "Gemini could not analyze the drone photos.",
+        "create": "Failed to create drone snapshot."
+      }
+    },
     "boxes": {
       "title": "Inventory boxes",
       "description": "Manage the active box pool before capturing snapshots.",
@@ -439,7 +492,8 @@
     },
     "source": {
       "manual": "Manual",
-      "drone": "AI Vision"
+      "AI": "AI",
+      "drone": "Drone"
     },
     "list": {
       "error": "Failed to load snapshots from the API.",
@@ -757,7 +811,6 @@
       "connectionRefreshed": "Connection refreshed."
     },
     "errors": {
-      "streamToken": "Could not prepare the stream.",
       "defaultMission": "Could not load the default mission.",
       "mission": "Mission request failed.",
       "emergency": "Emergency request failed.",

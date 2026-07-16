@@ -3,6 +3,8 @@ import { Snapshot } from "../models/Snapshot";
 import {
   AiSnapshotAnalyzeResponseDTO,
   AiSnapshotCreateDTO,
+  DroneSnapshotAnalyzeResponseDTO,
+  DroneSnapshotCreateDTO,
   SnapshotCreateDTO,
   SnapshotItemCreateDTO,
 } from "../dtos/SnapshotDTO";
@@ -29,4 +31,14 @@ export const analyzeAiSnapshot = (file: File) => {
 
 export const createAiSnapshot = (dto: AiSnapshotCreateDTO) => {
   return api.post<Snapshot>("/snapshots/ai/create", dto);
+};
+
+export const analyzeDroneSnapshot = (imagePaths: string[]) => {
+  return api.post<DroneSnapshotAnalyzeResponseDTO>("/snapshots/drone/analyze", {
+    image_paths: imagePaths,
+  });
+};
+
+export const createDroneSnapshot = (dto: DroneSnapshotCreateDTO) => {
+  return api.post<Snapshot>("/snapshots/drone/create", dto);
 };

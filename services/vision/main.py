@@ -11,6 +11,14 @@ from schemas import AnalyzeResponse, Detection, InferResponse, InventoryDetectio
 app = FastAPI(title="Vision Inference Service", version="0.1.0")
 
 DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+FALLBACK_MODELS = [
+    model.strip()
+    for model in os.getenv(
+        "GEMINI_FALLBACK_MODELS",
+        "gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite",
+    ).split(",")
+    if model.strip()
+]
 
 
 GEMINI_RESPONSE_SCHEMA = {
@@ -107,13 +115,24 @@ def _read_products(product_catalog: str) -> list[ProductContext]:
     return [ProductContext(**product) for product in raw_products]
 
 
-def _prompt(products: list[ProductContext]) -> str:
+def _prompt(products: list[ProductContext], image_count: int = 1) -> str:
     product_json = json.dumps(
         [product.model_dump(exclude_none=True) for product in products],
         ensure_ascii=False,
     )
+    subject = (
+        "these inventory snapshot images"
+        if image_count > 1
+        else "this inventory snapshot image"
+    )
+    multi_image_rules = (
+        "\n- The supplied images are from one drone inventory capture. Merge them into one result set."
+        "\n- If the same visible box appears in multiple images, return it once. Use box_code as the strongest dedupe key."
+        if image_count > 1
+        else ""
+    )
     return f"""
-Analyze this inventory snapshot image and extract box-level inventory rows.
+Analyze {subject} and extract box-level inventory rows.
 
 Known product catalog:
 {product_json}
@@ -130,6 +149,7 @@ Rules:
 - Use location_site, location_aisle, and location_rack for structured visible location text instead of burying it only in notes.
 - confidence_score must be between 0 and 1.
 - Return only JSON matching the response schema.
+{multi_image_rules}
 """.strip()
 
 
@@ -152,25 +172,90 @@ def _normalize_detection(row: dict) -> InventoryDetection | None:
         return None
 
 
+def _model_candidates() -> list[str]:
+    seen: set[str] = set()
+    models: list[str] = []
+    for model in [DEFAULT_MODEL, *FALLBACK_MODELS]:
+        if model in seen:
+            continue
+        seen.add(model)
+        models.append(model)
+    return models
+
+
+def _is_retryable_model_error(exc: Exception) -> bool:
+    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if status_code in {500, 502, 503, 504}:
+        return True
+
+    message = str(exc)
+    return any(
+        token in message
+        for token in (
+            "UNAVAILABLE",
+            "INTERNAL",
+            "DEADLINE_EXCEEDED",
+            "503",
+            "502",
+            "500",
+            "504",
+        )
+    )
+
+
 def _analyze_with_gemini(
     image_bytes: bytes,
     mime_type: str,
     products: list[ProductContext],
 ) -> AnalyzeResponse:
+    return _analyze_with_gemini_images([(image_bytes, mime_type)], products)
+
+
+def _analyze_with_gemini_images(
+    images: list[tuple[bytes, str]],
+    products: list[ProductContext],
+) -> AnalyzeResponse:
     from google.genai import types
 
+    if not images:
+        raise HTTPException(status_code=400, detail="At least one image is required")
+
     client = _gemini_client()
-    response = client.models.generate_content(
-        model=DEFAULT_MODEL,
-        contents=[
-            types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-            _prompt(products),
-        ],
-        config={
-            "response_mime_type": "application/json",
-            "response_json_schema": GEMINI_RESPONSE_SCHEMA,
-        },
-    )
+    image_parts = [
+        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+        for image_bytes, mime_type in images
+    ]
+    contents = [
+        *image_parts,
+        _prompt(products, image_count=len(images)),
+    ]
+    config = {
+        "response_mime_type": "application/json",
+        "response_json_schema": GEMINI_RESPONSE_SCHEMA,
+    }
+    errors: list[str] = []
+    used_model: str | None = None
+    response = None
+    for model in _model_candidates():
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config,
+            )
+            used_model = model
+            break
+        except Exception as exc:
+            if not _is_retryable_model_error(exc):
+                raise
+            errors.append(f"{model}: {exc}")
+
+    if response is None or used_model is None:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Gemini models unavailable after fallbacks: {' | '.join(errors)}",
+        )
+
     raw_json = _parse_gemini_json(response.text or "{}")
     raw_detections = raw_json.get("detections", [])
     raw_unmatched = raw_json.get("unmatched", [])
@@ -189,8 +274,14 @@ def _analyze_with_gemini(
         detections=detections,
         unmatched=unmatched,
         raw_json=raw_json,
-        model_version=DEFAULT_MODEL,
+        model_version=used_model,
     )
+
+
+async def _read_uploaded_image(file: UploadFile) -> tuple[bytes, str]:
+    image_bytes = await file.read()
+    mime_type = file.content_type or mimetypes.guess_type(file.filename or "")[0]
+    return image_bytes, mime_type or "image/jpeg"
 
 
 async def _read_image(file: Optional[UploadFile], image_url: Optional[str]) -> tuple[bytes, str]:
@@ -201,9 +292,7 @@ async def _read_image(file: Optional[UploadFile], image_url: Optional[str]) -> t
         )
 
     if file is not None:
-        image_bytes = await file.read()
-        mime_type = file.content_type or mimetypes.guess_type(file.filename or "")[0]
-        return image_bytes, mime_type or "image/jpeg"
+        return await _read_uploaded_image(file)
 
     import httpx
 
@@ -227,6 +316,37 @@ async def analyze(
             _analyze_with_gemini,
             image_bytes,
             mime_type,
+            products,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        status_code = getattr(exc, "status_code", 502)
+        message = str(exc)
+        if status_code == 429 or "RESOURCE_EXHAUSTED" in message:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini quota or billing is exhausted. Check Google AI Studio billing/credits for this API key.",
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini analysis failed: {message}",
+        )
+
+
+@app.post("/analyze/batch", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
+async def analyze_batch(
+    files: list[UploadFile] = File(...),
+    product_catalog: str = Form("[]"),
+):
+    products = _read_products(product_catalog)
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one image is required")
+    images = [await _read_uploaded_image(file) for file in files]
+    try:
+        return await asyncio.to_thread(
+            _analyze_with_gemini_images,
+            images,
             products,
         )
     except HTTPException:
@@ -278,5 +398,6 @@ def health():
     return {
         "status": "healthy" if configured else "degraded",
         "model_version": DEFAULT_MODEL,
+        "fallback_models": FALLBACK_MODELS,
         "gemini_configured": configured,
     }

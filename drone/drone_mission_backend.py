@@ -21,13 +21,14 @@ from drone_stream_backend import HtjrPacketState, app, runtime
 
 
 DEFAULT_SCRIPT = """takeoff 0.06
-wait 2
-back 0.3
-yaw_left 0.3
-neutral 0.5
-yaw_right 0.5
-wait 0.6
+up 2
+forward 2.5
+yaw_right 0.7
+wait 1
 photo
+wait 1
+yaw_right 0.7
+forward 2.5
 down 3
 emergency 1
 """
@@ -129,10 +130,18 @@ class MissionController:
 
         if command == "takeoff":
             runtime.send_for(HtjrPacketState(flyup=True), seconds if seconds is not None else 0.06, "takeoff")
+        elif command == "up":
+            runtime.send_for(HtjrPacketState(flyup=True), require_seconds(step), "up")
         elif command == "wait":
             runtime.neutral_for(require_seconds(step), "wait")
         elif command == "neutral":
             runtime.neutral_for(require_seconds(step), "neutral")
+        elif command == "forward":
+            runtime.send_for(
+                HtjrPacketState(ele=128 + runtime.config.axis_delta),
+                require_seconds(step),
+                "forward",
+            )
         elif command == "back":
             runtime.send_for(
                 HtjrPacketState(ele=128 - runtime.config.axis_delta),
@@ -176,7 +185,9 @@ def require_seconds(step: MissionStep) -> float:
 def parse_mission_script(script: str) -> list[MissionStep]:
     valid_commands = {
         "takeoff",
+        "up",
         "wait",
+        "forward",
         "back",
         "yaw_left",
         "yaw_right",

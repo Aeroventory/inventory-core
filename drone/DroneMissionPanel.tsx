@@ -18,13 +18,14 @@ type MissionStatus = {
 };
 
 const DEFAULT_SCRIPT = `takeoff 0.06
-wait 2
-back 0.3
-yaw_left 0.3
-neutral 0.5
-yaw_right 0.5
-wait 0.6
+up 2
+forward 2.5
+yaw_right 0.7
+wait 1
 photo
+wait 1
+yaw_right 0.7
+forward 2.5
 down 3
 emergency 1
 `;

@@ -6,6 +6,7 @@ inventory detections from images.
 ## Endpoints
 
 - `POST /analyze` — Accept an image file or image URL plus product catalog JSON, return matched and unmatched detections
+- `POST /analyze/batch` — Accept multiple image files plus product catalog JSON, merge them into one deduplicated inventory result
 - `POST /infer` — Legacy compatibility endpoint that returns detection results
 - `GET /health` — Health check
 
@@ -34,7 +35,8 @@ inventory detections from images.
 ## Configuration
 
 Set `GEMINI_API_KEY` in the repo `.env`. `GEMINI_MODEL` defaults to
-`gemini-3.5-flash`.
+`gemini-3.5-flash`. `GEMINI_FALLBACK_MODELS` is a comma-separated
+fallback chain used for transient provider-side 5xx/unavailable errors.
 
 ## Running
 

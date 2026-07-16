@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -30,12 +32,20 @@ def check_db_connection() -> bool:
         return False
 
 
+logger = logging.getLogger("uvicorn.error")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        close_drone_runtime()
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(close_drone_runtime), timeout=3.0
+            )
+        except (asyncio.TimeoutError, Exception) as exc:
+            logger.warning("Drone runtime shutdown: %s", exc)
 
 
 app = FastAPI(

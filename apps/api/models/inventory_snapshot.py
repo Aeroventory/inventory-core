@@ -1,16 +1,22 @@
 from datetime import datetime
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, true
+from sqlalchemy import CheckConstraint, Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from db.session import Base
 
 
 class InventorySnapshot(Base):
     __tablename__ = "inventory_snapshots"
+    __table_args__ = (
+        CheckConstraint(
+            "snapshot_type IN ('manual', 'AI', 'drone')",
+            name="ck_inventory_snapshots_snapshot_type",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
-    is_manual = Column(Boolean, nullable=False, default=True, server_default=true())
+    snapshot_type = Column(String, nullable=False, default="manual", server_default="manual")
     file_path = Column(String, nullable=True)
 
     # A snapshot has many items

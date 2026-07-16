@@ -1,5 +1,6 @@
 import { Product } from "./Product";
 import { MediaAsset } from "./Media";
+import type { SnapshotType } from "@/dtos/SnapshotDTO";
 
 export interface SnapshotItem {
   id: number;
@@ -16,7 +17,7 @@ export interface Snapshot {
   id: number;
   name: string;
   created_at: string;
-  is_manual: boolean;
+  snapshot_type: SnapshotType;
   file_path?: string | null;
   images?: MediaAsset[];
   primary_image?: MediaAsset | null;

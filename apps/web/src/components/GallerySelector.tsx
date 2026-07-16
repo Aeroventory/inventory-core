@@ -9,6 +9,7 @@ import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import CameraCaptureButton from "@/components/CameraCaptureButton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { MediaAsset } from "@/models/Media";
@@ -36,7 +37,8 @@ export default function GallerySelector({
   const { t } = useTranslation();
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [query, setQuery] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pondFiles, setPondFiles] = useState<File[]>([]);
+  const [cameraFiles, setCameraFiles] = useState<File[]>([]);
   const [pondKey, setPondKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -48,6 +50,7 @@ export default function GallerySelector({
   );
 
   const effectivePrimaryId = primaryImageId ?? selectedImages[0]?.id ?? null;
+  const pendingFiles = useMemo(() => [...pondFiles, ...cameraFiles], [cameraFiles, pondFiles]);
 
   const filteredAssets = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -100,7 +103,8 @@ export default function GallerySelector({
       const uploadedAssets = res.data;
       setAssets((current) => [...uploadedAssets, ...current]);
       setSelected([...selectedImages, ...uploadedAssets], effectivePrimaryId ?? uploadedAssets[0]?.id ?? null);
-      setPendingFiles([]);
+      setPondFiles([]);
+      setCameraFiles([]);
       setPondKey((value) => value + 1);
       toast.success(t("gallery.success.upload", { count: uploadedAssets.length }));
     } catch {
@@ -133,20 +137,47 @@ export default function GallerySelector({
         </div>
       )}
 
-      <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
-        <FilePond
-          key={pondKey}
-          allowMultiple
-          acceptedFileTypes={["image/*"]}
-          labelIdle={t("gallery.filePondLabel")}
-          onupdatefiles={(fileItems) => {
-            setPendingFiles(fileItems.map((item) => item.file as File).filter(Boolean));
-          }}
-        />
-        <Button onClick={handleUpload} disabled={pendingFiles.length === 0 || uploading}>
-          <UploadCloud size={16} />
-          {t("gallery.upload")}
-        </Button>
+      <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+          <FilePond
+            key={pondKey}
+            allowMultiple
+            acceptedFileTypes={["image/*"]}
+            labelIdle={t("gallery.filePondLabel")}
+            onupdatefiles={(fileItems) => {
+              setPondFiles(fileItems.map((item) => item.file as File).filter(Boolean));
+            }}
+          />
+          <CameraCaptureButton
+            filenamePrefix="camera-gallery"
+            buttonLabel={t("camera.actions.open")}
+            title={t("camera.galleryTitle")}
+            disabled={uploading}
+            onCapture={(file) => setCameraFiles((current) => [...current, file])}
+          />
+          <Button onClick={handleUpload} disabled={pendingFiles.length === 0 || uploading}>
+            <UploadCloud size={16} />
+            {t("gallery.upload")}
+          </Button>
+        </div>
+        {cameraFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 text-xs">
+            <Badge tone="blue">{t("camera.capturedCount", { count: cameraFiles.length })}</Badge>
+            {cameraFiles.map((file, index) => (
+              <span key={`${file.name}-${index}`} className="inline-flex max-w-full items-center gap-2 rounded-xl border border-[#D9E4DD] bg-white px-3 py-1.5 text-[#10231B]">
+                <span className="max-w-[220px] truncate">{file.name}</span>
+                <button
+                  type="button"
+                  className="text-[#5B6B63] hover:text-[#B91C1C]"
+                  aria-label={t("camera.actions.removeCaptured")}
+                  onClick={() => setCameraFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                >
+                  <X size={13} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <Input

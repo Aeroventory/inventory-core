@@ -5,29 +5,24 @@ import type {
   DroneMissionStatus,
   DronePhotoResponse,
   DroneRuntimeStatus,
-  DroneStreamTokenResponse,
 } from "@/models/Drone";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8003";
 
-function apiUrl(path: string, token?: string) {
-  const url = new URL(path, API_BASE_URL);
-  if (token) {
-    url.searchParams.set("token", token);
-  }
-  return url.toString();
+function apiUrl(path: string) {
+  return new URL(path, API_BASE_URL).toString();
 }
 
-export function droneMjpegUrl(token: string) {
-  return apiUrl("/drone/stream.mjpg", token);
+export function droneMjpegUrl() {
+  return apiUrl("/drone/stream.mjpg");
 }
 
 export function droneAssetUrl(path: string) {
   return new URL(path, API_BASE_URL).toString();
 }
 
-export function droneWebSocketUrl(token: string) {
-  const url = new URL(apiUrl("/drone/ws/stream", token));
+export function droneWebSocketUrl() {
+  const url = new URL(apiUrl("/drone/ws/stream"));
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   return url.toString();
 }
@@ -47,5 +42,3 @@ export const getDroneMissionStatus = () => api.get<DroneMissionStatus>("/drone/m
 export const emergencyDrone = () => api.post<DroneMissionStatus>("/drone/emergency");
 
 export const captureDronePhoto = () => api.post<DronePhotoResponse>("/drone/photo");
-
-export const createDroneStreamToken = () => api.post<DroneStreamTokenResponse>("/drone/stream-token");
