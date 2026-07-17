@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plane, Sparkles } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AiSnapshotModal from "@/components/AiSnapshotModal";
 import DroneSnapshotModal from "@/components/DroneSnapshotModal";
@@ -23,7 +22,6 @@ export default function SnapshotsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <Badge tone="green">{t("snapshots.page.badge")}</Badge>
           <h1 className="mt-3 text-3xl font-light text-[#10231B]">{t("snapshots.page.title")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">
             {t("snapshots.page.description")}

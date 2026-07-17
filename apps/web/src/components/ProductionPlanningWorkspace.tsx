@@ -231,7 +231,6 @@ export default function ProductionPlanningWorkspace() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <Badge tone="purple">{t("productionPlan.badge")}</Badge>
           <h1 className="mt-3 text-3xl font-light text-[#10231B]">{t("productionPlan.title")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">{t("productionPlan.description")}</p>
         </div>

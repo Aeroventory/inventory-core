@@ -104,7 +104,6 @@ function DeltaList({
 }
 
 export default function DashboardOverviewPage({
-  health,
   isAdmin,
   canAccessPlanner,
   onNavigate,
@@ -194,18 +193,10 @@ export default function DashboardOverviewPage({
     ...(canAccessPlanner ? [{ label: t("dashboard.shortcuts.openProductionPlan"), path: "/production-plan", icon: CalendarDays }] : []),
   ];
 
-  const translateState = (state: string | undefined, fallback = "unknown") => {
-    const value = state ?? fallback;
-    return t(`common.states.${value}`, { defaultValue: value });
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <Badge tone={health?.status === "healthy" ? "green" : "warning"}>
-            {health ? t("common.badges.apiStatus", { status: translateState(health.status) }) : t("common.badges.apiUnchecked")}
-          </Badge>
           <h1 className="mt-3 text-3xl font-light text-[#10231B]">{t("dashboard.hero.title")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">{t("dashboard.hero.description")}</p>
         </div>

@@ -102,7 +102,6 @@ export default function KitchenPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Badge tone="green">{t("kitchen.badge")}</Badge>
         <h1 className="mt-3 text-3xl font-light text-[#10231B]">{t("kitchen.title")}</h1>
         <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">
           {t("kitchen.description")}

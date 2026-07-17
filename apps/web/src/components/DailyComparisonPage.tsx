@@ -86,7 +86,6 @@ export default function DailyComparisonPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <Badge tone="blue">{t("reportsDaily.badge")}</Badge>
           <h1 className="mt-3 text-3xl font-light text-[#10231B]">{t("reportsDaily.title")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-[#5B6B63]">{t("reportsDaily.description")}</p>
         </div>
