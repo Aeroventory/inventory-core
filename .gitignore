@@ -15,6 +15,12 @@ node_modules/
 dist/
 .npm
 
+# Runtime storage
+apps/api/storage/temp/*
+!apps/api/storage/temp/.gitkeep
+apps/api/storage/uploads/*
+!apps/api/storage/uploads/.gitkeep
+
 # IDE
 .idea/
 .vscode/
