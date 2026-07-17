@@ -1,9 +1,11 @@
 import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Boxes, LogIn } from "lucide-react";
+import { Boxes, CircleHelp, LogIn } from "lucide-react";
 import { toast } from "react-toastify";
 
+import AboutDemoModal from "@/components/AboutDemoModal";
+import LanguageSelect from "@/components/LanguageSelect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const login = useAuthStore((state) => state.login);
   const loading = useAuthStore((state) => state.loading);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -49,7 +52,21 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#F7FAF8] px-4 py-10">
+    <main className="relative grid min-h-screen place-items-center bg-[#F7FAF8] px-4 py-20 sm:py-10">
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-6 sm:top-6">
+        <LanguageSelect />
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          className="rounded-full"
+          aria-label={t("aboutDemo.actions.open")}
+          onClick={() => setAboutOpen(true)}
+        >
+          <CircleHelp size={18} />
+        </Button>
+      </div>
+
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#00684A] text-white shadow-[0_12px_24px_rgba(0,104,74,0.2)]">
@@ -97,6 +114,8 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AboutDemoModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </main>
   );
 }

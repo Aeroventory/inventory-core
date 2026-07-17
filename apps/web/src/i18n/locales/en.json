@@ -163,6 +163,38 @@
     "password": "Password",
     "error": "Username or password is incorrect."
   },
+  "aboutDemo": {
+    "title": "About Aeroventory",
+    "description": "Public demo information, credentials, and project links.",
+    "actions": {
+      "open": "About Aeroventory",
+      "close": "Close about modal",
+      "viewDemoVideos": "View Demo Videos"
+    },
+    "project": {
+      "title": "Project information",
+      "description": "Aeroventory is a drone and AI assisted inventory management and stock analysis platform developed as a graduation project for the Software Development bachelor’s program at Istanbul Aydin University."
+    },
+    "credentials": {
+      "title": "Demo credentials",
+      "description": "Use these public credentials to explore the shared demo environment.",
+      "username": "Username",
+      "password": "Password"
+    },
+    "copy": {
+      "aria": "Copy {{field}}",
+      "success": "{{field}} copied.",
+      "error": "Could not copy to clipboard."
+    },
+    "warning": "This account has administrator permissions, so visitors may modify application data. The application will automatically be restored to its original demo state every 24 hours. Do not upload personal, confidential, or sensitive information.",
+    "team": {
+      "title": "Team members",
+      "description": "Graduation project team and GitHub profiles."
+    },
+    "videos": {
+      "title": "Demo videos",
+"description": "Watch project demonstrations, feature showcases, and short videos captured throughout the development process."    }
+  },
   "dashboard": {
     "errors": {
       "loadData": "Could not load dashboard data from the API."

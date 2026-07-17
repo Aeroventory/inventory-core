@@ -163,6 +163,38 @@
     "password": "Şifre",
     "error": "Kullanıcı adı veya şifre hatalı."
   },
+  "aboutDemo": {
+    "title": "Aeroventory Hakkında",
+    "description": "Herkese açık demo bilgileri, giriş bilgileri ve proje bağlantıları.",
+    "actions": {
+      "open": "Aeroventory hakkında",
+      "close": "Hakkında penceresini kapat",
+      "viewDemoVideos": "Demo Videolarını Görüntüle"
+    },
+    "project": {
+      "title": "Proje bilgisi",
+      "description": "Aeroventory, İstanbul Aydın Üniversitesi Yazılım Geliştirme lisans programı mezuniyet projesi olarak geliştirilen, drone ve yapay zekâ destekli bir envanter yönetimi ve stok analiz platformudur."
+    },
+    "credentials": {
+      "title": "Demo giriş bilgileri",
+      "description": "Paylaşımlı demo ortamını incelemek için bu herkese açık giriş bilgilerini kullanın.",
+      "username": "Kullanıcı adı",
+      "password": "Şifre"
+    },
+    "copy": {
+      "aria": "{{field}} kopyala",
+      "success": "{{field}} kopyalandı.",
+      "error": "Panoya kopyalanamadı."
+    },
+    "warning": "Bu hesap yönetici yetkilerine sahiptir, bu nedenle ziyaretçiler uygulama verilerini değiştirebilir. Uygulama her 24 saatte bir otomatik olarak başlangıçtaki demo durumuna döndürülecektir. Kişisel, gizli veya hassas bilgi yüklemeyin.",
+    "team": {
+      "title": "Ekip üyeleri",
+      "description": "Mezuniyet projesi ekibi ve GitHub profilleri."
+    },
+    "videos": {
+      "title": "Demo videoları",
+"description": "Proje tanıtımlarını, özellik gösterimlerini ve geliştirme süreci boyunca kaydedilen kısa videoları izleyin."    }
+  },
   "dashboard": {
     "errors": {
       "loadData": "Panel verileri API'den alınamadı."

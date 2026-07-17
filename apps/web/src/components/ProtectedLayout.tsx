@@ -6,10 +6,9 @@ import {
   BarChart3,
   Boxes,
   ChefHat,
-  ChevronDown,
+  CircleHelp,
   ClipboardList,
   Database,
-  Globe,
   Home,
   Images,
   LogOut,
@@ -21,6 +20,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import AboutDemoModal from "@/components/AboutDemoModal";
+import LanguageSelect from "@/components/LanguageSelect";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { navItems, type ViewId } from "@/lib/design";
@@ -55,10 +56,11 @@ function isCurrentPath(pathname: string, itemPath: string) {
 }
 
 export default function ProtectedLayout() {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const location = useLocation();
@@ -104,11 +106,6 @@ export default function ProtectedLayout() {
   };
 
   const userRoleLabel = translateRole(user?.role);
-  const currentLanguage = i18n.resolvedLanguage?.startsWith("tr") ? "tr" : "en";
-
-  const handleLanguageChange = (language: string) => {
-    void i18n.changeLanguage(language);
-  };
 
   const sidebar = (
     <aside className="flex h-full flex-col border-r border-[#D9E4DD] bg-white/95 backdrop-blur">
@@ -207,24 +204,18 @@ export default function ProtectedLayout() {
             </Badge>
           </div>
 
-          <label className="relative flex h-10 items-center rounded-xl border border-[#D9E4DD] bg-white text-sm font-semibold text-[#10231B] shadow-sm">
-            <span className="pointer-events-none absolute left-3 text-[#00684A]">
-              <Globe size={17} />
-            </span>
-            <span className="sr-only">{t("common.language.label")}</span>
-            <select
-              aria-label={t("common.language.label")}
-              className="h-full appearance-none rounded-xl bg-transparent py-0 pl-9 pr-8 outline-none transition focus-visible:ring-4 focus-visible:ring-[rgba(0,104,74,0.12)]"
-              value={currentLanguage}
-              onChange={(event) => handleLanguageChange(event.target.value)}
-            >
-              <option value="en">{t("common.language.english")}</option>
-              <option value="tr">{t("common.language.turkish")}</option>
-            </select>
-            <span className="pointer-events-none absolute right-3 text-[#5B6B63]">
-              <ChevronDown size={14} />
-            </span>
-          </label>
+          <LanguageSelect />
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="rounded-full"
+            aria-label={t("aboutDemo.actions.open")}
+            onClick={() => setAboutOpen(true)}
+          >
+            <CircleHelp size={18} />
+          </Button>
 
           <Button variant="secondary" size="icon" onClick={fetchHealth} disabled={healthLoading} aria-label={t("common.aria.refreshApiHealth")}>
             {healthLoading ? <RefreshCw size={17} className="animate-spin" /> : <RefreshCw size={17} />}
@@ -251,6 +242,8 @@ export default function ProtectedLayout() {
           )}
         </div>
       </header>
+
+      <AboutDemoModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
 
       <main className="px-4 py-6 sm:px-6 lg:px-8 xl:ml-[19rem]">
         <div className="mx-auto max-w-[1500px]">
